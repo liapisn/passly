@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+# Run from the api/ directory: `.venv/bin/pytest`
+pythonpath = ["."]
+testpaths = ["tests"]
