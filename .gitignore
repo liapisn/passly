@@ -1,0 +1,28 @@
+# Python
+api/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Node / Next.js
+web/node_modules/
+web/.next/
+web/out/
+web/.turbo/
+npm-debug.log*
+yarn-error.log*
+
+# Env / secrets (Apple cert, API keys — never commit)
+.env
+.env.local
+*.p12
+*.pem
+*.mobileprovision
+*.pkpass
+certs/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
