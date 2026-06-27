@@ -44,6 +44,31 @@ python3.11 -m venv .venv
 
 Smoke check: `curl localhost:8000/crew/info` should return the six crew roles.
 
+The API follows a **hexagonal (ports & adapters)** layout so the core stays
+framework-free and testable:
+
+```
+app/
+  domain/     models + ports (Protocols) + errors   — no FastAPI, no framework
+  services/   use cases (ShopService, CrewService)   — depend only on ports
+  adapters/
+    inbound/  http.py (FastAPI driving adapter)
+    outbound/ memory_shop_repository, crew_gateway   — driven adapters
+  deps.py     composition root (which adapter backs which port)
+  main.py     app factory
+```
+
+P1 (Apple pass signer) and P3 (crew campaign drafting) drop in as new ports +
+adapters without touching the services.
+
+Tests:
+
+```bash
+cd api
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/pytest
+```
+
 ### Web (port 3000)
 
 ```bash
