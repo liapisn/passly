@@ -1,0 +1,7 @@
+# Full local setup: everything in requirements-dev.txt PLUS the framework
+# installed editable from the sibling repo, so you can run the live server
+# (uvicorn) and hit /crew/info. The path is relative to this api/ directory and
+# requires ../../solo-founder-crew to be checked out alongside this repo.
+#   .venv/bin/pip install -r requirements-local.txt
+-r requirements-dev.txt
+-e ../../solo-founder-crew

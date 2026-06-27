@@ -38,11 +38,19 @@ checked out as a sibling directory (`../solo-founder-crew`).
 ```bash
 cd api
 python3.11 -m venv .venv
-.venv/bin/pip install -r requirements.txt   # installs the framework editable
+.venv/bin/pip install -r requirements-local.txt   # deps + framework (editable)
 .venv/bin/uvicorn app.main:app --reload
 ```
 
 Smoke check: `curl localhost:8000/crew/info` should return the six crew roles.
+
+Requirements are split so CI never needs the private framework repo:
+
+| File | Contains | Used by |
+|------|----------|---------|
+| `requirements.txt` | fastapi, uvicorn | base |
+| `requirements-dev.txt` | base + pytest, httpx, ruff | **CI** (tests fake the framework) |
+| `requirements-local.txt` | dev + `solo-founder-crew` editable | running the live server locally |
 
 The API follows a **hexagonal (ports & adapters)** layout so the core stays
 framework-free and testable:

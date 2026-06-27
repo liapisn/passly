@@ -1,7 +1,7 @@
-# Passly API dependencies. Install from within this api/ directory:
-#   .venv/bin/pip install -r requirements.txt
-# The framework is installed editable from the sibling repo (path is relative
-# to this api/ dir) so local changes to solo-founder-crew are picked up live.
+# Passly API runtime dependencies (CI-installable — no local path deps).
+# The solo-founder-crew framework is NOT here: it is a local path dependency
+# only needed to run the live server, so it lives in requirements-local.txt.
+# Tests don't need it (the CrewGateway is faked at the seam), so CI installs
+# only requirements-dev.txt.
 fastapi>=0.115
 uvicorn[standard]>=0.30
--e ../../solo-founder-crew

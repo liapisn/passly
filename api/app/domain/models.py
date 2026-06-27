@@ -8,7 +8,7 @@ deliberately small for the demo: a store card (loyalty) or a coupon.
 from __future__ import annotations
 
 import re
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated
 
 from pydantic import BaseModel, Field, field_validator
@@ -18,7 +18,7 @@ HEX_COLOR = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 Hex = Annotated[str, Field(pattern=HEX_COLOR.pattern, examples=["#0B5"])]
 
 
-class PassType(str, Enum):
+class PassType(StrEnum):
     """The two pass shapes the demo supports."""
 
     store_card = "storeCard"   # loyalty / stamp card
