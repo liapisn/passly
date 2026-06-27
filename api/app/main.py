@@ -8,12 +8,15 @@ top of this.
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+from . import store
+from .models import Shop, ShopRecord
 
 app = FastAPI(
     title="Passly API",
-    version="0.0.0",
+    version="0.1.0",
     summary="Wallet passes + AI marketing for Greek SMBs — thesis demo backend.",
 )
 
@@ -46,3 +49,22 @@ def crew_info() -> dict[str, object]:
         "roles": sorted(ROLE_LIBRARY.keys()),
         "role_count": len(ROLE_LIBRARY),
     }
+
+
+@app.post("/shops", response_model=ShopRecord, status_code=201)
+def create_shop(shop: Shop) -> ShopRecord:
+    """Persist a shop and its pass design. P1 will sign the design into a .pkpass."""
+    return store.create(shop)
+
+
+@app.get("/shops", response_model=list[ShopRecord])
+def list_shops() -> list[ShopRecord]:
+    return store.list_all()
+
+
+@app.get("/shops/{shop_id}", response_model=ShopRecord)
+def get_shop(shop_id: str) -> ShopRecord:
+    record = store.get(shop_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail=f"No shop {shop_id!r}")
+    return record
