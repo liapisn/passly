@@ -5,14 +5,21 @@ layer is deliberately thin."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
-from ...deps import get_crew_service, get_shop_service
-from ...domain.errors import ShopNotFound
-from ...domain.models import Shop, ShopRecord
+from ...deps import get_campaign_service, get_crew_service, get_shop_service
+from ...domain.errors import CampaignNotFound, ShopNotFound
+from ...domain.models import CampaignState, Shop, ShopRecord
+from ...services.campaign_service import CampaignService
 from ...services.crew_service import CrewService
 from ...services.shop_service import ShopService
 
 router = APIRouter()
+
+
+class RespondBody(BaseModel):
+    action: str  # "approve" | "reject" | "kill"
+    feedback: str | None = None
 
 
 @router.get("/health")
@@ -58,4 +65,46 @@ def get_shop(
     try:
         return shops.get_shop(shop_id)
     except ShopNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+# ── campaigns: crew drafts a launch campaign, founder approves via web ──
+
+
+@router.post(
+    "/shops/{shop_id}/campaign", response_model=CampaignState, status_code=202
+)
+async def start_campaign(
+    shop_id: str,
+    campaigns: CampaignService = Depends(get_campaign_service),
+) -> CampaignState:
+    """Kick off the crew. Returns immediately; poll GET /campaigns/{thread_id}
+    until status is `awaiting_review`, then respond at the gate."""
+    try:
+        return await campaigns.start_for_shop(shop_id)
+    except ShopNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/campaigns/{thread_id}", response_model=CampaignState)
+def get_campaign(
+    thread_id: str,
+    campaigns: CampaignService = Depends(get_campaign_service),
+) -> CampaignState:
+    try:
+        return campaigns.get(thread_id)
+    except CampaignNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/campaigns/{thread_id}/respond", response_model=CampaignState)
+async def respond_campaign(
+    thread_id: str,
+    body: RespondBody,
+    campaigns: CampaignService = Depends(get_campaign_service),
+) -> CampaignState:
+    """Deliver the founder's decision (approve / reject+feedback / kill) to the gate."""
+    try:
+        return await campaigns.respond(thread_id, body.action, body.feedback)
+    except CampaignNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
