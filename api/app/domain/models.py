@@ -59,3 +59,37 @@ class ShopRecord(Shop):
     """A persisted shop — `Shop` plus a server-assigned id."""
 
     id: str
+
+
+# ── Campaign (the crew drafting a launch campaign, gated by the founder) ──
+
+
+class CampaignStatus(StrEnum):
+    """Lifecycle of a crew-drafted campaign. The terminal three mirror the
+    framework's AuthorFlowResult.status exactly."""
+
+    drafting = "drafting"               # crew is generating / revising
+    awaiting_review = "awaiting_review"  # paused at the HITL gate
+    shipped = "shipped"                 # founder approved → published
+    killed = "killed"                   # founder killed the run
+    exhausted = "exhausted"             # revision budget spent
+    error = "error"                     # the run raised
+
+
+class ReviewGate(BaseModel):
+    """What the founder sees at a HITL gate — the draft under review."""
+
+    turn: int
+    artifact: str
+    options: list[str]  # allowed actions, e.g. ["approve", "reject", "kill"]
+
+
+class CampaignState(BaseModel):
+    """Pollable state of a campaign run. Exactly one of `gate` /
+    `final_artifact` / `error` is meaningful, per `status`."""
+
+    thread_id: str
+    status: CampaignStatus
+    gate: ReviewGate | None = None
+    final_artifact: str | None = None
+    error: str | None = None

@@ -54,3 +54,52 @@ def test_bad_hex_colour_is_422(client):
     payload["design"]["background_color"] = "green"
     res = client.post("/shops", json=payload)
     assert res.status_code == 422
+
+
+# ── campaign flow (fake runner injected at the seam) ──
+
+
+def _new_shop_id(client) -> str:
+    return client.post("/shops", json=valid_shop()).json()["id"]
+
+
+def test_start_campaign_pauses_at_gate(client):
+    shop_id = _new_shop_id(client)
+    res = client.post(f"/shops/{shop_id}/campaign")
+    assert res.status_code == 202
+    body = res.json()
+    assert body["status"] == "awaiting_review"
+    assert body["gate"]["options"] == ["approve", "reject", "kill"]
+
+
+def test_start_campaign_unknown_shop_is_404(client):
+    assert client.post("/shops/shop-404/campaign").status_code == 404
+
+
+def test_approve_ships(client):
+    shop_id = _new_shop_id(client)
+    thread_id = client.post(f"/shops/{shop_id}/campaign").json()["thread_id"]
+    res = client.post(f"/campaigns/{thread_id}/respond", json={"action": "approve"})
+    assert res.status_code == 200
+    assert res.json()["status"] == "shipped"
+    assert res.json()["final_artifact"]
+
+
+def test_reject_opens_next_gate(client):
+    shop_id = _new_shop_id(client)
+    thread_id = client.post(f"/shops/{shop_id}/campaign").json()["thread_id"]
+    res = client.post(
+        f"/campaigns/{thread_id}/respond",
+        json={"action": "reject", "feedback": "warmer please"},
+    )
+    assert res.json()["status"] == "awaiting_review"
+    assert res.json()["gate"]["turn"] == 2
+
+
+def test_respond_unknown_campaign_is_404(client):
+    res = client.post("/campaigns/camp-404/respond", json={"action": "approve"})
+    assert res.status_code == 404
+
+
+def test_get_unknown_campaign_is_404(client):
+    assert client.get("/campaigns/camp-404").status_code == 404

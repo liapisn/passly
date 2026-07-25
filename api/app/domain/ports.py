@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from .models import Shop, ShopRecord
+from .models import CampaignState, Shop, ShopRecord
 
 
 class ShopRepository(Protocol):
@@ -32,3 +32,24 @@ class CrewGateway(Protocol):
     """
 
     def role_catalogue(self) -> list[str]: ...
+
+
+class CampaignRunner(Protocol):
+    """Drives the marketing crew to draft a launch campaign for a shop and
+    holds the founder gate. The real adapter wraps solo-founder-crew's Author
+    Flow + a web HITL surface; a fake stands in for tests.
+    """
+
+    async def start(self, shop: ShopRecord) -> str:
+        """Kick off a run for the shop; returns its thread_id. The run drafts,
+        then pauses at the HITL gate (state becomes `awaiting_review`)."""
+        ...
+
+    def get(self, thread_id: str) -> CampaignState | None:
+        """Current pollable state, or None if the thread is unknown."""
+        ...
+
+    async def respond(self, thread_id: str, action: str, feedback: str | None) -> bool:
+        """Deliver the founder's decision to a waiting gate. False if there is
+        no run/gate awaiting a response."""
+        ...
