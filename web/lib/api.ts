@@ -39,6 +39,64 @@ export async function createShop(shop: Shop): Promise<ShopRecord> {
   return res.json();
 }
 
+export async function getShop(shopId: string): Promise<ShopRecord> {
+  const res = await fetch(`${API_URL}/shops/${shopId}`);
+  if (!res.ok) throw new Error(`Shop not found (${res.status})`);
+  return res.json();
+}
+
+// ── campaigns ──
+
+export type CampaignStatus =
+  | "drafting"
+  | "awaiting_review"
+  | "shipped"
+  | "killed"
+  | "exhausted"
+  | "error";
+
+export type ReviewGate = {
+  turn: number;
+  artifact: string;
+  options: string[];
+};
+
+export type CampaignState = {
+  thread_id: string;
+  status: CampaignStatus;
+  gate: ReviewGate | null;
+  final_artifact: string | null;
+  error: string | null;
+};
+
+export async function startCampaign(shopId: string): Promise<CampaignState> {
+  const res = await fetch(`${API_URL}/shops/${shopId}/campaign`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`Could not start campaign (${res.status})`);
+  return res.json();
+}
+
+export async function getCampaign(threadId: string): Promise<CampaignState> {
+  const res = await fetch(`${API_URL}/campaigns/${threadId}`);
+  if (!res.ok) throw new Error(`Campaign not found (${res.status})`);
+  return res.json();
+}
+
+export async function respondCampaign(
+  threadId: string,
+  action: "approve" | "reject" | "kill",
+  feedback?: string,
+): Promise<CampaignState> {
+  const res = await fetch(`${API_URL}/campaigns/${threadId}/respond`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, feedback: feedback ?? null }),
+  });
+  if (!res.ok) throw new Error(`Response failed (${res.status})`);
+  return res.json();
+}
+
 export const defaultDesign: PassDesign = {
   pass_type: "storeCard",
   logo_text: "ΚΑΦΕ ΜΑΡΙΑ",
