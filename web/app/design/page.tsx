@@ -193,10 +193,12 @@ export default function DesignPage() {
             </button>
 
             {saved && (
-              <p className="w-[330px] rounded-lg bg-accent-soft px-3 py-2 text-center text-xs text-accent">
-                Saved as <span className="font-mono">{saved.id}</span> — next:
-                the crew drafts the campaign (P3).
-              </p>
+              <Link
+                href={`/shops/${saved.id}/campaign`}
+                className="block w-[330px] rounded-xl bg-accent py-3 text-center text-sm font-semibold text-white transition hover:opacity-90"
+              >
+                Let the crew draft the campaign →
+              </Link>
             )}
             {error && (
               <p className="w-[330px] rounded-lg bg-red-50 px-3 py-2 text-center text-xs text-red-600">
