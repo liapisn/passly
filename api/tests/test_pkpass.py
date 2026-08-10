@@ -76,7 +76,15 @@ def test_build_pkpass_is_a_valid_bundle():
 
     with zipfile.ZipFile(io.BytesIO(data)) as z:
         names = set(z.namelist())
-        assert {"pass.json", "icon.png", "icon@2x.png", "manifest.json", "signature"} <= names
+        assert {
+            "pass.json",
+            "icon.png",
+            "icon@2x.png",
+            "logo.png",
+            "logo@2x.png",
+            "manifest.json",
+            "signature",
+        } <= names
 
         manifest = json.loads(z.read("manifest.json"))
         # every hashed file's SHA-1 matches its contents
