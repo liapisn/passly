@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { PassPreview } from "@/components/PassPreview";
 import {
+  API_URL,
   createShop,
   defaultDesign,
   type PassDesign,
@@ -184,13 +185,22 @@ export default function DesignPage() {
               {saving ? "Saving…" : "Save pass"}
             </button>
 
-            <button
-              disabled
-              title="Real .pkpass signing lands in P1 (needs Apple cert)"
-              className="w-[330px] cursor-not-allowed rounded-xl border border-line bg-card py-3 text-sm font-medium text-muted"
-            >
-               Add to Apple Wallet · P1
-            </button>
+            {saved ? (
+              <a
+                href={`${API_URL}/shops/${saved.id}/pkpass`}
+                className="block w-[330px] rounded-xl border border-line bg-card py-3 text-center text-sm font-medium transition hover:border-accent"
+              >
+                 Add to Apple Wallet
+              </a>
+            ) : (
+              <button
+                disabled
+                title="Save the pass first"
+                className="w-[330px] cursor-not-allowed rounded-xl border border-line bg-card py-3 text-sm font-medium text-muted"
+              >
+                 Add to Apple Wallet
+              </button>
+            )}
 
             {saved && (
               <Link

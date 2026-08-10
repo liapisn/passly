@@ -103,3 +103,18 @@ def test_respond_unknown_campaign_is_404(client):
 
 def test_get_unknown_campaign_is_404(client):
     assert client.get("/campaigns/camp-404").status_code == 404
+
+
+# ── pkpass download ──
+
+
+def test_download_pkpass(client):
+    shop_id = client.post("/shops", json=valid_shop()).json()["id"]
+    res = client.get(f"/shops/{shop_id}/pkpass")
+    assert res.status_code == 200
+    assert res.headers["content-type"] == "application/vnd.apple.pkpass"
+    assert res.content[:2] == b"PK"  # it's a zip
+
+
+def test_download_pkpass_unknown_shop_is_404(client):
+    assert client.get("/shops/shop-404/pkpass").status_code == 404

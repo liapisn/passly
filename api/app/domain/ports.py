@@ -53,3 +53,16 @@ class CampaignRunner(Protocol):
         """Deliver the founder's decision to a waiting gate. False if there is
         no run/gate awaiting a response."""
         ...
+
+
+class PassSigner(Protocol):
+    """Produces the detached PKCS#7/CMS signature over a pass's manifest.json.
+
+    The real adapter signs with the Apple Pass Type ID certificate; a fake
+    returns an empty signature for dev/CI (a structurally-valid but
+    Wallet-unacceptable bundle). `real` lets callers tell the two apart.
+    """
+
+    real: bool
+
+    def sign(self, manifest: bytes) -> bytes: ...
