@@ -12,10 +12,18 @@ behaviour lives in `services/` and `domain/`. See the hexagonal layout:
 
 from __future__ import annotations
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
 
-from .adapters.inbound.http import router
+from dotenv import load_dotenv
+
+# Load api/.env before anything reads os.environ (signing config lives there).
+# No-op if the file is absent (e.g. CI); never raises.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
+from .adapters.inbound.http import router  # noqa: E402
 
 
 def create_app() -> FastAPI:
