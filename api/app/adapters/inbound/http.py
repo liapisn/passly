@@ -4,14 +4,20 @@ layer is deliberately thin."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 
-from ...deps import get_campaign_service, get_crew_service, get_shop_service
+from ...deps import (
+    get_campaign_service,
+    get_crew_service,
+    get_pass_service,
+    get_shop_service,
+)
 from ...domain.errors import CampaignNotFound, ShopNotFound
 from ...domain.models import CampaignState, Shop, ShopRecord
 from ...services.campaign_service import CampaignService
 from ...services.crew_service import CrewService
+from ...services.pass_service import PassService
 from ...services.shop_service import ShopService
 
 router = APIRouter()
@@ -66,6 +72,24 @@ def get_shop(
         return shops.get_shop(shop_id)
     except ShopNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/shops/{shop_id}/pkpass")
+def download_pkpass(
+    shop_id: str,
+    passes: PassService = Depends(get_pass_service),
+) -> Response:
+    """The shop's Apple Wallet pass. Signed when a cert is configured; a
+    structurally-valid unsigned bundle otherwise (dev)."""
+    try:
+        data = passes.build_pkpass(shop_id)
+    except ShopNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return Response(
+        content=data,
+        media_type="application/vnd.apple.pkpass",
+        headers={"Content-Disposition": f'attachment; filename="{shop_id}.pkpass"'},
+    )
 
 
 # ── campaigns: crew drafts a launch campaign, founder approves via web ──

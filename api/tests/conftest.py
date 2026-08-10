@@ -8,11 +8,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.adapters.outbound.memory_shop_repository import InMemoryShopRepository
-from app.deps import get_campaign_service, get_crew_service, get_shop_service
+from app.adapters.outbound.signer import FakeSigner
+from app.deps import (
+    get_campaign_service,
+    get_crew_service,
+    get_pass_service,
+    get_shop_service,
+)
 from app.domain.models import CampaignState, CampaignStatus, ReviewGate, ShopRecord
 from app.main import create_app
 from app.services.campaign_service import CampaignService
 from app.services.crew_service import CrewService
+from app.services.pass_service import PassService
 from app.services.shop_service import ShopService
 
 
@@ -80,6 +87,9 @@ def client() -> TestClient:
     app.dependency_overrides[get_shop_service] = lambda: ShopService(repo)
     app.dependency_overrides[get_crew_service] = lambda: CrewService(FakeCrewGateway())
     app.dependency_overrides[get_campaign_service] = lambda: CampaignService(repo, runner)
+    app.dependency_overrides[get_pass_service] = lambda: PassService(
+        repo, FakeSigner(), team_id="TEAMTEST00", pass_type_id="pass.com.dion.test"
+    )
     return TestClient(app)
 
 

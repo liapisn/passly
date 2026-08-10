@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
+  API_URL,
   type CampaignState,
   getCampaign,
   getShop,
@@ -177,12 +178,20 @@ export default function CampaignPage() {
             <Dot className="bg-accent" /> Published — the campaign is live.
           </div>
           <DraftCard text={campaign?.final_artifact ?? ""} />
-          <Link
-            href="/design"
-            className="inline-block rounded-xl border border-line bg-card px-5 py-2.5 text-sm font-medium transition hover:border-accent"
-          >
-            ← Back to the designer
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href={`${API_URL}/shops/${id}/pkpass`}
+              className="rounded-xl bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition hover:opacity-90"
+            >
+               Add to Apple Wallet
+            </a>
+            <Link
+              href="/design"
+              className="rounded-xl border border-line bg-card px-5 py-2.5 text-sm font-medium transition hover:border-accent"
+            >
+              ← Back to the designer
+            </Link>
+          </div>
         </div>
       )}
 
