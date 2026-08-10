@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PassPreview } from "@/components/PassPreview";
-import { API_URL, defaultDesign } from "@/lib/api";
+import { API_URL, defaultDesign, demoLogoSrc } from "@/lib/api";
 
 export default function Home() {
   return (
@@ -46,7 +46,7 @@ export default function Home() {
 
         <div className="flex justify-center lg:justify-end">
           <div className="rise [animation-delay:120ms] rotate-3 transition-transform hover:rotate-0">
-            <PassPreview design={defaultDesign} />
+            <PassPreview design={defaultDesign} logoSrc={demoLogoSrc} />
           </div>
         </div>
       </div>

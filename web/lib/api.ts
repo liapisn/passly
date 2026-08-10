@@ -99,13 +99,16 @@ export async function respondCampaign(
 
 export const defaultDesign: PassDesign = {
   pass_type: "storeCard",
-  logo_text: "ΚΑΦΕ ΜΑΡΙΑ",
+  logo_text: "CHUNKY COOKIE BAR",
   offer_label: "Loyalty",
-  offer_value: "Buy 9, get the 10th free",
+  offer_value: "Στα 9 cookies, το 10ο κέρασμα",
   secondary_label: "Member",
   secondary_value: "—",
-  background_color: "#0B5D3B",
-  foreground_color: "#FFFFFF",
-  label_color: "#BFE8D4",
-  barcode_message: "passly:demo:karfe-maria",
+  background_color: "#3B2417",
+  foreground_color: "#F5E6C8",
+  label_color: "#C9A86A",
+  barcode_message: "passly:member:CHUNKY-0001",
 };
+
+// The demo shop's real logo (used with their permission), served from /public.
+export const demoLogoSrc = "/chunky-logo.svg";

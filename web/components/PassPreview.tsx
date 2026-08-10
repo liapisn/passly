@@ -2,8 +2,16 @@ import type { PassDesign } from "@/lib/api";
 
 // A faithful Apple-Wallet-style card that re-renders live as the design
 // changes. The hero of the designer — it is what the founder is really
-// shaping, and what P1 will sign into a real .pkpass.
-export function PassPreview({ design }: { design: PassDesign }) {
+// shaping, and what the .pkpass is signed from. When `logoSrc` is given, the
+// shop's logo shows on a light chip (legible on any card colour); otherwise
+// the logo text is used.
+export function PassPreview({
+  design,
+  logoSrc,
+}: {
+  design: PassDesign;
+  logoSrc?: string;
+}) {
   const {
     logo_text,
     offer_label,
@@ -27,11 +35,18 @@ export function PassPreview({ design }: { design: PassDesign }) {
         color: foreground_color,
       }}
     >
-      {/* header: logo text + pass kind */}
+      {/* header: logo (chip) or logo text + pass kind */}
       <div className="flex items-center justify-between">
-        <span className="font-display text-sm font-bold uppercase tracking-[0.14em]">
-          {logo_text || "YOUR SHOP"}
-        </span>
+        {logoSrc ? (
+          <span className="inline-flex items-center rounded-lg bg-[#F5E6C8] px-2 py-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoSrc} alt={logo_text} className="h-6 w-auto" />
+          </span>
+        ) : (
+          <span className="font-display text-sm font-bold uppercase tracking-[0.14em]">
+            {logo_text || "YOUR SHOP"}
+          </span>
+        )}
         <span
           className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
           style={{ background: hexA(foreground_color, 0.16), color: foreground_color }}

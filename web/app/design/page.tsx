@@ -7,14 +7,15 @@ import {
   API_URL,
   createShop,
   defaultDesign,
+  demoLogoSrc,
   type PassDesign,
   type PassType,
   type ShopRecord,
 } from "@/lib/api";
 
 export default function DesignPage() {
-  const [name, setName] = useState("Καφέ Μαρία");
-  const [city, setCity] = useState("Σύρος");
+  const [name, setName] = useState("Chunky Cookie Bar");
+  const [city, setCity] = useState("Αθήνα");
   const [design, setDesign] = useState<PassDesign>(defaultDesign);
   const [saved, setSaved] = useState<ShopRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -175,7 +176,7 @@ export default function DesignPage() {
         {/* ── live preview ───────────────────────────────────── */}
         <div className="lg:sticky lg:top-10 lg:self-start">
           <div className="flex flex-col items-center gap-6">
-            <PassPreview design={design} />
+            <PassPreview design={design} logoSrc={demoLogoSrc} />
 
             <button
               onClick={save}
