@@ -18,6 +18,7 @@ export default function JoinPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [member, setMember] = useState<MemberRecord | null>(null);
+  const [existed, setExisted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +32,13 @@ export default function JoinPage() {
     setBusy(true);
     setError(null);
     try {
-      setMember(await enrollMember(shopId, name.trim(), email.trim()));
+      const { member: m, existed: e } = await enrollMember(
+        shopId,
+        name.trim(),
+        email.trim(),
+      );
+      setMember(m);
+      setExisted(e);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Κάτι πήγε στραβά");
     } finally {
@@ -57,6 +64,10 @@ export default function JoinPage() {
                 {shop.name}
               </h1>
               <p className="mt-1 text-sm text-muted">{shop.design.offer_value}</p>
+              <p className="mt-2 text-xs text-muted">
+                Νέος; γίνε μέλος. Ήδη μέλος; βάλε το email σου και πάρε ξανά την
+                κάρτα σου.
+              </p>
 
               <div className="mt-6 space-y-3">
                 <input
@@ -85,10 +96,13 @@ export default function JoinPage() {
           ) : (
             <div className="rise w-full text-center">
               <h1 className="font-display text-2xl font-extrabold tracking-tight">
-                Καλώς ήρθες, {member.name || "φίλε"}! 🍪
+                {existed ? "Καλώς ήρθες πίσω" : "Καλώς ήρθες"},{" "}
+                {member.name || "φίλε"}! 🍪
               </h1>
               <p className="mt-1 text-sm text-muted">
-                Η κάρτα σου είναι έτοιμη — μάζεψε σφραγίδες σε κάθε επίσκεψη.
+                {existed
+                  ? "Ορίστε ξανά η κάρτα σου — με τις τρέχουσες σφραγίδες."
+                  : "Η κάρτα σου είναι έτοιμη — μάζεψε σφραγίδες σε κάθε επίσκεψη."}
               </p>
               <a
                 href={memberPassUrl(member.id)}

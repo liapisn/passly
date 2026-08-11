@@ -39,6 +39,13 @@ class MemberRepository(Protocol):
     def save(self, member: MemberRecord) -> MemberRecord: ...
 
 
+class EmailSender(Protocol):
+    """Sends a customer their pass link. Real adapter uses Resend; a fake records
+    sends for dev/CI. Platform-neutral — the email body is just text/HTML."""
+
+    def send(self, *, to: str, subject: str, body: str) -> None: ...
+
+
 class CrewGateway(Protocol):
     """The solo-founder-crew framework, behind a port.
 

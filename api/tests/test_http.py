@@ -146,9 +146,11 @@ def test_enroll_and_list_members(client):
 def test_same_email_does_not_duplicate(client):
     shop_id = _new_shop(client)
     body = {"name": "Νίκος", "email": "nikos@example.com"}
-    first = client.post(f"/shops/{shop_id}/members", json=body).json()
-    again = client.post(f"/shops/{shop_id}/members", json=body).json()
-    assert again["id"] == first["id"]
+    first = client.post(f"/shops/{shop_id}/members", json=body)
+    again = client.post(f"/shops/{shop_id}/members", json=body)
+    assert first.status_code == 201  # new member
+    assert again.status_code == 200  # already a member → re-download
+    assert again.json()["id"] == first.json()["id"]
     assert len(client.get(f"/shops/{shop_id}/members").json()) == 1
 
 

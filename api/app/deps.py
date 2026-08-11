@@ -14,7 +14,7 @@ from .adapters.outbound.crew_gateway import SoloFounderCrewGateway
 from .adapters.outbound.crew_runner import SoloFounderCrewRunner
 from .adapters.outbound.sqlite_member_repository import SqliteMemberRepository
 from .adapters.outbound.sqlite_shop_repository import SqliteShopRepository
-from .domain.ports import PassSigner
+from .domain.ports import EmailSender, PassSigner
 from .services.campaign_service import CampaignService
 from .services.crew_service import CrewService
 from .services.member_service import MemberService
@@ -56,8 +56,28 @@ def get_campaign_service() -> CampaignService:
     return CampaignService(_shop_repository(), _crew_runner())
 
 
+@lru_cache
+def _email_sender() -> EmailSender:
+    key = os.environ.get("RESEND_API_KEY")
+    if key:
+        from .adapters.outbound.email_sender import ResendEmailSender
+
+        return ResendEmailSender(
+            key, from_addr=os.environ.get("PASSLY_EMAIL_FROM", "onboarding@resend.dev")
+        )
+
+    from .adapters.outbound.email_sender import FakeEmailSender
+
+    return FakeEmailSender()
+
+
 def get_member_service() -> MemberService:
-    return MemberService(_shop_repository(), _member_repository())
+    return MemberService(
+        _shop_repository(),
+        _member_repository(),
+        _email_sender(),
+        os.environ.get("PASSLY_PUBLIC_URL", "http://localhost:8000"),
+    )
 
 
 # api/ — signing-material paths in .env are resolved relative to here, so the

@@ -77,14 +77,15 @@ export async function enrollMember(
   shopId: string,
   name: string,
   email: string,
-): Promise<MemberRecord> {
+): Promise<{ member: MemberRecord; existed: boolean }> {
   const res = await fetch(`${API_URL}/shops/${shopId}/members`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email }),
   });
   if (!res.ok) throw new Error(`Enrollment failed (${res.status})`);
-  return res.json();
+  // 200 = already a member (re-download); 201 = newly enrolled.
+  return { member: await res.json(), existed: res.status === 200 };
 }
 
 export function memberPassUrl(memberId: string): string {
