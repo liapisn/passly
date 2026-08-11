@@ -16,6 +16,7 @@ export type PassDesign = {
   foreground_color: string;
   label_color: string;
   barcode_message: string;
+  stamps_goal: number;
 };
 
 export type Shop = {
@@ -54,8 +55,23 @@ export type MemberRecord = {
   email: string;
   serial_number: string;
   stamps: number;
+  rewards: number;
   created_at: string;
 };
+
+export async function listMembers(shopId: string): Promise<MemberRecord[]> {
+  const res = await fetch(`${API_URL}/shops/${shopId}/members`);
+  if (!res.ok) throw new Error(`Could not load members (${res.status})`);
+  return res.json();
+}
+
+export async function addStamp(memberId: string): Promise<MemberRecord> {
+  const res = await fetch(`${API_URL}/members/${memberId}/stamp`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`Stamp failed (${res.status})`);
+  return res.json();
+}
 
 export async function enrollMember(
   shopId: string,
@@ -137,7 +153,8 @@ export const defaultDesign: PassDesign = {
   background_color: "#3B2417",
   foreground_color: "#F5E6C8",
   label_color: "#C9A86A",
-  barcode_message: "passly:member:CHUNKY-0001",
+  barcode_message: "",
+  stamps_goal: 10,
 };
 
 // The demo shop's real logo (used with their permission), served from /public.

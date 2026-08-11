@@ -95,8 +95,9 @@ def test_issue_for_member_uses_serial_and_stamps():
     with zipfile.ZipFile(io.BytesIO(issued.content)) as z:
         pj = json.loads(z.read("pass.json"))
     assert pj["serialNumber"] == member.serial_number  # unique per customer
+    assert pj["barcodes"][0]["message"] == member.serial_number  # QR identifies the member
     stamp_fields = [f for f in pj["storeCard"]["secondaryFields"] if f["key"] == "stamps"]
-    assert stamp_fields and stamp_fields[0]["value"] == "3"
+    assert stamp_fields and stamp_fields[0]["value"] == "3/10"  # N/goal
 
 
 def test_issue_unknown_raises():

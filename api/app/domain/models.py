@@ -41,6 +41,8 @@ class PassDesign(BaseModel):
     foreground_color: Hex = "#FFFFFF"
     label_color: Hex = "#BFE8D4"
     barcode_message: str = Field(default="", max_length=120)
+    # Stamps needed for a reward; reaching it resets the card and grants a reward.
+    stamps_goal: int = Field(default=10, ge=1, le=99)
 
     @field_validator("background_color", "foreground_color", "label_color")
     @classmethod
@@ -83,7 +85,8 @@ class MemberRecord(Member):
 
     id: str
     serial_number: str  # unique per pass; becomes pass.json serialNumber
-    stamps: int = 0
+    stamps: int = 0      # progress toward the shop's stamps_goal
+    rewards: int = 0     # completed cards (reward earned; card reset)
     created_at: str = ""
 
 

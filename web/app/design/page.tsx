@@ -143,11 +143,16 @@ export default function DesignPage() {
                 />
               </Field>
             </div>
-            <Field label="Barcode message">
+            <Field label="Stamps goal (reward every N)">
               <input
-                className={`${inputCls} font-mono text-xs`}
-                value={design.barcode_message}
-                onChange={(e) => set("barcode_message", e.target.value)}
+                type="number"
+                min={1}
+                max={99}
+                className={inputCls}
+                value={design.stamps_goal}
+                onChange={(e) =>
+                  set("stamps_goal", Math.max(1, Number(e.target.value) || 1))
+                }
               />
             </Field>
           </Section>
@@ -217,6 +222,14 @@ export default function DesignPage() {
                 className="block w-[330px] rounded-xl border border-line bg-card py-3 text-center text-sm font-medium transition hover:border-accent"
               >
                 Open the customer join page →
+              </Link>
+            )}
+            {saved && (
+              <Link
+                href={`/shops/${saved.id}/members`}
+                className="block w-[330px] rounded-xl border border-line bg-card py-3 text-center text-sm font-medium transition hover:border-accent"
+              >
+                Members &amp; stamps console →
               </Link>
             )}
             {error && (

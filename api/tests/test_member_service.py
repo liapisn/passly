@@ -50,11 +50,30 @@ def test_same_email_returns_same_member():
 
 def test_add_stamp_increments():
     svc, shops = _svc()
-    sid = _shop(shops)
+    sid = _shop(shops)  # default goal 10
     m = svc.enroll(sid, "Νίκος", "nikos@example.com")
     svc.add_stamp(m.id)
     svc.add_stamp(m.id)
     assert svc.get(m.id).stamps == 2
+    assert svc.get(m.id).rewards == 0
+
+
+def test_reaching_goal_grants_reward_and_resets():
+    svc, shops = _svc()
+    sid = shops.add(
+        Shop(
+            name="X",
+            city="",
+            design=PassDesign(
+                logo_text="X", offer_label="L", offer_value="V", stamps_goal=2
+            ),
+        )
+    ).id
+    m = svc.enroll(sid, "Νίκος", "nikos@example.com")
+    svc.add_stamp(m.id)         # 1/2
+    done = svc.add_stamp(m.id)  # 2/2 → reward + reset
+    assert done.stamps == 0
+    assert done.rewards == 1
 
 
 def test_get_unknown_member_raises():
