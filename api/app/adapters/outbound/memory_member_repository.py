@@ -27,6 +27,16 @@ class InMemoryMemberRepository:
     def get(self, member_id: str) -> MemberRecord | None:
         return self._members.get(member_id)
 
+    def find_by_email(self, shop_id: str, email: str) -> MemberRecord | None:
+        return next(
+            (
+                m
+                for m in self._members.values()
+                if m.shop_id == shop_id and m.email.lower() == email.lower()
+            ),
+            None,
+        )
+
     def list_for_shop(self, shop_id: str) -> list[MemberRecord]:
         return [m for m in self._members.values() if m.shop_id == shop_id]
 

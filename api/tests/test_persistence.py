@@ -30,8 +30,8 @@ def test_shops_survive_a_new_repo_instance(tmp_path):
 def test_members_survive_and_serial_is_unique(tmp_path):
     db = tmp_path / "passly.db"
     repo = SqliteMemberRepository(db)
-    a = repo.add(Member(shop_id="shop-1", name="Νίκος"))
-    b = repo.add(Member(shop_id="shop-1", name="Μαρία"))
+    a = repo.add(Member(shop_id="shop-1", name="Νίκος", email="nikos@example.com"))
+    b = repo.add(Member(shop_id="shop-1", name="Μαρία", email="maria@example.com"))
     assert a.serial_number != b.serial_number
 
     reopened = SqliteMemberRepository(db)

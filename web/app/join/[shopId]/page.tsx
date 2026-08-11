@@ -16,6 +16,7 @@ export default function JoinPage() {
   const { shopId } = useParams<{ shopId: string }>();
   const [shop, setShop] = useState<ShopRecord | null>(null);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [member, setMember] = useState<MemberRecord | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +31,7 @@ export default function JoinPage() {
     setBusy(true);
     setError(null);
     try {
-      setMember(await enrollMember(shopId, name.trim()));
+      setMember(await enrollMember(shopId, name.trim(), email.trim()));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Κάτι πήγε στραβά");
     } finally {
@@ -64,9 +65,16 @@ export default function JoinPage() {
                   placeholder="Το όνομά σου"
                   className="w-full rounded-xl border border-line bg-card px-4 py-3 text-center text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
                 />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Το email σου"
+                  className="w-full rounded-xl border border-line bg-card px-4 py-3 text-center text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent-soft"
+                />
                 <button
                   onClick={join}
-                  disabled={busy || !name.trim()}
+                  disabled={busy || !name.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)}
                   className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
                 >
                   {busy ? "Εγγραφή…" : "Γίνε μέλος"}

@@ -15,10 +15,14 @@ class MemberService:
         self._shops = shops
         self._members = members
 
-    def enroll(self, shop_id: str, name: str) -> MemberRecord:
+    def enroll(self, shop_id: str, name: str, email: str) -> MemberRecord:
         if self._shops.get(shop_id) is None:
             raise ShopNotFound(shop_id)
-        return self._members.add(Member(shop_id=shop_id, name=name))
+        # One pass per email per shop — re-enrolling returns the same pass.
+        existing = self._members.find_by_email(shop_id, email)
+        if existing is not None:
+            return existing
+        return self._members.add(Member(shop_id=shop_id, name=name, email=email))
 
     def list_for_shop(self, shop_id: str) -> list[MemberRecord]:
         if self._shops.get(shop_id) is None:

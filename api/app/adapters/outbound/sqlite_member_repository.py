@@ -21,8 +21,9 @@ class SqliteMemberRepository:
         with self._conn() as c:
             c.execute(
                 "CREATE TABLE IF NOT EXISTS members "
-                "(id TEXT PRIMARY KEY, n INTEGER, shop_id TEXT, "
-                "serial_number TEXT UNIQUE, json TEXT)"
+                "(id TEXT PRIMARY KEY, n INTEGER, shop_id TEXT, email TEXT, "
+                "serial_number TEXT UNIQUE, json TEXT, "
+                "UNIQUE(shop_id, email))"
             )
 
     def _conn(self) -> sqlite3.Connection:
@@ -42,9 +43,16 @@ class SqliteMemberRepository:
                 **member.model_dump(),
             )
             c.execute(
-                "INSERT INTO members(id, n, shop_id, serial_number, json) "
-                "VALUES(?, ?, ?, ?, ?)",
-                (record.id, n, record.shop_id, record.serial_number, record.model_dump_json()),
+                "INSERT INTO members(id, n, shop_id, email, serial_number, json) "
+                "VALUES(?, ?, ?, ?, ?, ?)",
+                (
+                    record.id,
+                    n,
+                    record.shop_id,
+                    record.email,
+                    record.serial_number,
+                    record.model_dump_json(),
+                ),
             )
             return record
 
@@ -52,6 +60,14 @@ class SqliteMemberRepository:
         with self._conn() as c:
             row = c.execute(
                 "SELECT json FROM members WHERE id = ?", (member_id,)
+            ).fetchone()
+        return MemberRecord.model_validate_json(row["json"]) if row else None
+
+    def find_by_email(self, shop_id: str, email: str) -> MemberRecord | None:
+        with self._conn() as c:
+            row = c.execute(
+                "SELECT json FROM members WHERE shop_id = ? AND email = ? COLLATE NOCASE",
+                (shop_id, email),
             ).fetchone()
         return MemberRecord.model_validate_json(row["json"]) if row else None
 

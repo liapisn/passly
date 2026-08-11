@@ -51,6 +51,7 @@ export type MemberRecord = {
   id: string;
   shop_id: string;
   name: string;
+  email: string;
   serial_number: string;
   stamps: number;
   created_at: string;
@@ -59,11 +60,12 @@ export type MemberRecord = {
 export async function enrollMember(
   shopId: string,
   name: string,
+  email: string,
 ): Promise<MemberRecord> {
   const res = await fetch(`${API_URL}/shops/${shopId}/members`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, email }),
   });
   if (!res.ok) throw new Error(`Enrollment failed (${res.status})`);
   return res.json();
