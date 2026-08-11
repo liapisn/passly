@@ -36,10 +36,12 @@ class MemberService:
             raise ShopNotFound(shop_id)
         # One pass per email per shop — re-enrolling returns the same pass.
         existing = self._members.find_by_email(shop_id, email)
-        if existing is not None:
-            return existing
-        member = self._members.add(Member(shop_id=shop_id, name=name, email=email))
-        self._email_pass(member)  # new member → send them their pass link
+        member = existing or self._members.add(
+            Member(shop_id=shop_id, name=name, email=email)
+        )
+        # Email the pass link on every enrolment (new = welcome, returning =
+        # re-download) — the customer asked for it by submitting their email.
+        self._email_pass(member, returning=existing is not None)
         return member
 
     def list_for_shop(self, shop_id: str) -> list[MemberRecord]:
@@ -66,21 +68,24 @@ class MemberService:
             update = {"stamps": member.stamps + 1}
         return self._members.save(member.model_copy(update=update))
 
-    def _email_pass(self, member: MemberRecord) -> None:
+    def _email_pass(self, member: MemberRecord, *, returning: bool = False) -> None:
         """Best-effort — email the customer a link to their pass. A send failure
         must never break enrolment."""
         if self._email is None:
             _log.info("No email sender configured — skipping pass email for %s", member.email)
             return
         link = f"{self._pass_link_base}/members/{member.id}/pkpass"
+        subject = "Η κάρτα σου 🍪" if returning else "Η κάρτα σου είναι έτοιμη 🍪"
         try:
-            _log.info("Emailing pass link to %s (%s)", member.email, link)
+            _log.info(
+                "Emailing pass link to %s (returning=%s, %s)", member.email, returning, link
+            )
             self._email.send(
                 to=member.email,
-                subject="Η κάρτα σου είναι έτοιμη 🍪",
+                subject=subject,
                 body=(
                     f"Γεια σου {member.name or 'φίλε'},<br><br>"
-                    f'Η κάρτα πιστότητάς σου είναι έτοιμη — '
+                    f"Η κάρτα πιστότητάς σου — "
                     f'<a href="{link}">πρόσθεσέ τη στο Apple Wallet</a>.<br><br>'
                     f"Κράτα αυτό το email για να την ξανακατεβάσεις όποτε θες."
                 ),
