@@ -83,7 +83,7 @@ def test_get_unknown_member_raises():
         svc.get("mem-404")
 
 
-def test_new_member_is_emailed_their_pass_once():
+def test_pass_emailed_on_every_enrollment():
     shops = InMemoryShopRepository()
     members = InMemoryMemberRepository()
     email = FakeEmailSender()
@@ -95,6 +95,8 @@ def test_new_member_is_emailed_their_pass_once():
     assert email.sent[0]["to"] == "nikos@example.com"
     assert f"/members/{m.id}/pkpass" in email.sent[0]["body"]
 
-    # Re-enrolling the same email (a re-download) sends no second email.
-    svc.enroll(sid, "Νίκος", "nikos@example.com")
-    assert len(email.sent) == 1
+    # Re-enrolling the same email (a re-download) emails the link again.
+    again = svc.enroll(sid, "Νίκος", "nikos@example.com")
+    assert again.id == m.id  # still the same pass (idempotent)
+    assert len(email.sent) == 2
+    assert f"/members/{m.id}/pkpass" in email.sent[1]["body"]
