@@ -8,6 +8,10 @@ a key present.
 
 from __future__ import annotations
 
+import logging
+
+_log = logging.getLogger("passly.email")
+
 
 class FakeEmailSender:
     def __init__(self) -> None:
@@ -15,6 +19,7 @@ class FakeEmailSender:
 
     def send(self, *, to: str, subject: str, body: str) -> None:
         self.sent.append({"to": to, "subject": subject, "body": body})
+        _log.info("FakeEmailSender: NOT sending (no RESEND_API_KEY) — would email %s", to)
 
 
 class ResendEmailSender:
@@ -25,9 +30,13 @@ class ResendEmailSender:
     def send(self, *, to: str, subject: str, body: str) -> None:
         import httpx
 
-        httpx.post(
+        resp = httpx.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {self._key}"},
             json={"from": self._from, "to": [to], "subject": subject, "html": body},
             timeout=10,
-        ).raise_for_status()
+        )
+        # Surface Resend's error body (e.g. "can only send to your own address").
+        if resp.status_code >= 400:
+            raise RuntimeError(f"Resend {resp.status_code}: {resp.text}")
+        _log.info("Resend: accepted email to %s (from %s)", to, self._from)

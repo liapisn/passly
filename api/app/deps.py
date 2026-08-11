@@ -58,16 +58,23 @@ def get_campaign_service() -> CampaignService:
 
 @lru_cache
 def _email_sender() -> EmailSender:
+    import logging
+
+    log = logging.getLogger("passly.deps")
     key = os.environ.get("RESEND_API_KEY")
-    if key:
+    if key and not key.startswith("re_xxx"):
         from .adapters.outbound.email_sender import ResendEmailSender
 
-        return ResendEmailSender(
-            key, from_addr=os.environ.get("PASSLY_EMAIL_FROM", "onboarding@resend.dev")
-        )
+        sender = os.environ.get("PASSLY_EMAIL_FROM", "onboarding@resend.dev")
+        log.info("Email: ResendEmailSender active (from %s)", sender)
+        return ResendEmailSender(key, from_addr=sender)
 
     from .adapters.outbound.email_sender import FakeEmailSender
 
+    log.warning(
+        "Email: no valid RESEND_API_KEY -> FakeEmailSender (NO mail is sent). "
+        "Set RESEND_API_KEY in api/.env to send for real."
+    )
     return FakeEmailSender()
 
 

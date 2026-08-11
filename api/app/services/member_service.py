@@ -6,9 +6,13 @@ so it is testable with fakes and never imports the framework.
 
 from __future__ import annotations
 
+import logging
+
 from ..domain.errors import MemberNotFound, ShopNotFound
 from ..domain.models import Member, MemberRecord
 from ..domain.ports import EmailSender, MemberRepository, ShopRepository
+
+_log = logging.getLogger("passly.member")
 
 
 class MemberService:
@@ -66,9 +70,11 @@ class MemberService:
         """Best-effort — email the customer a link to their pass. A send failure
         must never break enrolment."""
         if self._email is None:
+            _log.info("No email sender configured — skipping pass email for %s", member.email)
             return
         link = f"{self._pass_link_base}/members/{member.id}/pkpass"
         try:
+            _log.info("Emailing pass link to %s (%s)", member.email, link)
             self._email.send(
                 to=member.email,
                 subject="Η κάρτα σου είναι έτοιμη 🍪",
@@ -79,5 +85,5 @@ class MemberService:
                     f"Κράτα αυτό το email για να την ξανακατεβάσεις όποτε θες."
                 ),
             )
-        except Exception:  # noqa: BLE001 — email is best-effort, never blocks enrolment
-            pass
+        except Exception as exc:  # noqa: BLE001 — best-effort; never blocks enrolment
+            _log.warning("Pass email to %s FAILED: %s", member.email, exc)

@@ -12,6 +12,7 @@ behaviour lives in `services/` and `domain/`. See the hexagonal layout:
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -19,6 +20,9 @@ from dotenv import load_dotenv
 # Load api/.env before anything reads os.environ (signing config lives there).
 # No-op if the file is absent (e.g. CI); never raises.
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+# Surface app INFO logs (email sender choice, send attempts) in the server output.
+logging.basicConfig(level=logging.INFO)
 
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
