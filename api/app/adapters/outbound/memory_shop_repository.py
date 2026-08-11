@@ -1,23 +1,21 @@
 """In-memory ShopRepository adapter.
 
-The demo's persistence (and a perfectly good test double). A DB-backed adapter
-implementing the same port is a P4 / Passly-live concern; swapping it in needs
-no change to the services. Ids are short and readable (shop-1, shop-2, …).
+A test double (SQLite is the real store). Ids are non-sequential smallIds
+(`shop_…`) from the shared id helper, same as the SQLite adapter.
 """
 
 from __future__ import annotations
 
+from ...domain.ids import small_id
 from ...domain.models import Shop, ShopRecord
 
 
 class InMemoryShopRepository:
     def __init__(self) -> None:
         self._shops: dict[str, ShopRecord] = {}
-        self._counter = 0
 
     def add(self, shop: Shop) -> ShopRecord:
-        self._counter += 1
-        record = ShopRecord(id=f"shop-{self._counter}", **shop.model_dump())
+        record = ShopRecord(id=small_id("shop"), **shop.model_dump())
         self._shops[record.id] = record
         return record
 

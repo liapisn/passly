@@ -19,7 +19,7 @@ def _shop(name: str = "Καφέ Μαρία") -> Shop:
         name=name,
         city="Σύρος",
         design=PassDesign(
-            pass_type=PassType.store_card,
+            pass_type=PassType.loyalty,
             logo_text="ΚΑΦΕ ΜΑΡΙΑ",
             offer_label="Loyalty",
             offer_value="Buy 9, get the 10th free",
@@ -34,17 +34,17 @@ def _service() -> ShopService:
 def test_create_assigns_id_and_persists():
     svc = _service()
     record = svc.create_shop(_shop())
-    assert record.id == "shop-1"
+    assert record.id.startswith("shop_")  # non-sequential smallId
     assert record.name == "Καφέ Μαρία"
-    assert svc.get_shop("shop-1") is record
+    assert svc.get_shop(record.id) is record
 
 
-def test_ids_increment_and_list_returns_all():
+def test_ids_are_unique_and_list_returns_all():
     svc = _service()
-    svc.create_shop(_shop("A"))
-    svc.create_shop(_shop("B"))
+    a = svc.create_shop(_shop("A"))
+    b = svc.create_shop(_shop("B"))
+    assert a.id != b.id and a.id.startswith("shop_") and b.id.startswith("shop_")
     records = svc.list_shops()
-    assert [r.id for r in records] == ["shop-1", "shop-2"]
     assert {r.name for r in records} == {"A", "B"}
 
 

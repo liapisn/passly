@@ -14,3 +14,9 @@ class CampaignNotFound(Exception):
     def __init__(self, thread_id: str) -> None:
         super().__init__(f"No campaign {thread_id!r} (or no gate awaiting a response)")
         self.thread_id = thread_id
+
+
+class MemberNotFound(Exception):
+    def __init__(self, member_id: str) -> None:
+        super().__init__(f"No member {member_id!r}")
+        self.member_id = member_id

@@ -1,17 +1,20 @@
-"""Test fixtures. The HTTP tests run against a fresh app with fakes injected at
-the composition seam — no shared state between tests, and no need to import the
-heavy solo-founder-crew framework."""
+"""Test fixtures. The HTTP tests run against a fresh app with in-memory repos +
+fakes injected at the composition seam — no shared state between tests, no
+SQLite file, and no need to import the heavy solo-founder-crew framework."""
 
 from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
 
+from app.adapters.outbound.apple_pass_issuer import ApplePassIssuer
+from app.adapters.outbound.memory_member_repository import InMemoryMemberRepository
 from app.adapters.outbound.memory_shop_repository import InMemoryShopRepository
 from app.adapters.outbound.signer import FakeSigner
 from app.deps import (
     get_campaign_service,
     get_crew_service,
+    get_member_service,
     get_pass_service,
     get_shop_service,
 )
@@ -19,6 +22,7 @@ from app.domain.models import CampaignState, CampaignStatus, ReviewGate, ShopRec
 from app.main import create_app
 from app.services.campaign_service import CampaignService
 from app.services.crew_service import CrewService
+from app.services.member_service import MemberService
 from app.services.pass_service import PassService
 from app.services.shop_service import ShopService
 
@@ -31,9 +35,8 @@ class FakeCrewGateway:
 
 
 class FakeCampaignRunner:
-    """A CampaignRunner double that simulates the gate cycle deterministically:
-    start → awaiting_review; approve → shipped; reject → a fresh gate; kill →
-    killed. No async LLM, no framework."""
+    """A CampaignRunner double: start → awaiting_review; approve → shipped;
+    reject → fresh gate; kill → killed. No async LLM, no framework."""
 
     def __init__(self) -> None:
         self._states: dict[str, CampaignState] = {}
@@ -60,7 +63,7 @@ class FakeCampaignRunner:
             )
         elif action == "reject":
             self._states[thread_id] = self._gate(thread_id, turn=state.gate.turn + 1)
-        else:  # kill
+        else:
             self._states[thread_id] = CampaignState(
                 thread_id=thread_id, status=CampaignStatus.killed
             )
@@ -79,16 +82,24 @@ class FakeCampaignRunner:
         )
 
 
+def _fake_issuer() -> ApplePassIssuer:
+    return ApplePassIssuer(
+        FakeSigner(), team_id="TEAMTEST00", pass_type_id="pass.com.dion.test"
+    )
+
+
 @pytest.fixture
 def client() -> TestClient:
     app = create_app()
-    repo = InMemoryShopRepository()  # shared by shop + campaign services
+    shops = InMemoryShopRepository()  # shared across the services below
+    members = InMemoryMemberRepository()
     runner = FakeCampaignRunner()
-    app.dependency_overrides[get_shop_service] = lambda: ShopService(repo)
+    app.dependency_overrides[get_shop_service] = lambda: ShopService(shops)
     app.dependency_overrides[get_crew_service] = lambda: CrewService(FakeCrewGateway())
-    app.dependency_overrides[get_campaign_service] = lambda: CampaignService(repo, runner)
+    app.dependency_overrides[get_campaign_service] = lambda: CampaignService(shops, runner)
+    app.dependency_overrides[get_member_service] = lambda: MemberService(shops, members)
     app.dependency_overrides[get_pass_service] = lambda: PassService(
-        repo, FakeSigner(), team_id="TEAMTEST00", pass_type_id="pass.com.dion.test"
+        shops, members, _fake_issuer()
     )
     return TestClient(app)
 
@@ -98,7 +109,7 @@ def valid_shop() -> dict:
         "name": "Καφέ Μαρία",
         "city": "Σύρος",
         "design": {
-            "pass_type": "storeCard",
+            "pass_type": "loyalty",
             "logo_text": "ΚΑΦΕ ΜΑΡΙΑ",
             "offer_label": "Loyalty",
             "offer_value": "Buy 9, get the 10th free",

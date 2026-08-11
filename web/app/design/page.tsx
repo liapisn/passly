@@ -88,7 +88,7 @@ export default function DesignPage() {
           <Section title="Pass">
             <Field label="Pass type">
               <div className="flex gap-2">
-                {(["storeCard", "coupon"] as PassType[]).map((t) => (
+                {(["loyalty", "coupon"] as PassType[]).map((t) => (
                   <button
                     key={t}
                     onClick={() => set("pass_type", t)}
@@ -98,7 +98,7 @@ export default function DesignPage() {
                         : "border-line bg-card text-muted hover:border-accent"
                     }`}
                   >
-                    {t === "storeCard" ? "Loyalty card" : "Coupon"}
+                    {t === "loyalty" ? "Loyalty card" : "Coupon"}
                   </button>
                 ))}
               </div>
