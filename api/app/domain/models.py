@@ -65,11 +65,16 @@ class ShopRecord(Shop):
 # ── Member (an end customer holding a shop's pass) ──
 
 
+EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
 class Member(BaseModel):
-    """A customer enrolling in a shop's loyalty pass."""
+    """A customer enrolling in a shop's loyalty pass. Email is the identity —
+    unique per shop (one pass per customer) and the channel to send the pass."""
 
     shop_id: str
     name: str = Field(default="", max_length=80)
+    email: str = Field(pattern=EMAIL.pattern, max_length=120)
 
 
 class MemberRecord(Member):

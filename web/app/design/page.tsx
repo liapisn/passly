@@ -211,6 +211,14 @@ export default function DesignPage() {
                 Let the crew draft the campaign →
               </Link>
             )}
+            {saved && (
+              <Link
+                href={`/join/${saved.id}`}
+                className="block w-[330px] rounded-xl border border-line bg-card py-3 text-center text-sm font-medium transition hover:border-accent"
+              >
+                Open the customer join page →
+              </Link>
+            )}
             {error && (
               <p className="w-[330px] rounded-lg bg-red-50 px-3 py-2 text-center text-xs text-red-600">
                 {error}

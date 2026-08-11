@@ -88,7 +88,7 @@ def test_issue_for_shop_is_a_valid_bundle():
 def test_issue_for_member_uses_serial_and_stamps():
     svc, shops, members = _service()
     shop = _shop(shops)
-    member = members.add(Member(shop_id=shop.id, name="Νίκος"))
+    member = members.add(Member(shop_id=shop.id, name="Νίκος", email="nikos@example.com"))
     members.save(member.model_copy(update={"stamps": 3}))
     issued = svc.issue_for_member(member.id)
     assert issued.filename == f"{member.serial_number}.pkpass"

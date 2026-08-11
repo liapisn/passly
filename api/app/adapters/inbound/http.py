@@ -5,7 +5,7 @@ layer is deliberately thin."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ...deps import (
     get_campaign_service,
@@ -15,7 +15,7 @@ from ...deps import (
     get_shop_service,
 )
 from ...domain.errors import CampaignNotFound, MemberNotFound, ShopNotFound
-from ...domain.models import CampaignState, MemberRecord, Shop, ShopRecord
+from ...domain.models import EMAIL, CampaignState, MemberRecord, Shop, ShopRecord
 from ...services.campaign_service import CampaignService
 from ...services.crew_service import CrewService
 from ...services.member_service import MemberService
@@ -32,6 +32,7 @@ class RespondBody(BaseModel):
 
 class EnrollBody(BaseModel):
     name: str = ""
+    email: str = Field(pattern=EMAIL.pattern)
 
 
 @router.get("/health")
@@ -109,9 +110,10 @@ def enroll_member(
     body: EnrollBody,
     members: MemberService = Depends(get_member_service),
 ) -> MemberRecord:
-    """Enrol a customer in the shop's pass — mints a unique serial number."""
+    """Enrol a customer in the shop's pass — mints a unique serial number.
+    Re-enrolling with the same email returns the existing pass."""
     try:
-        return members.enroll(shop_id, body.name)
+        return members.enroll(shop_id, body.name, body.email)
     except ShopNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

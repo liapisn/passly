@@ -129,22 +129,45 @@ def _new_shop(client) -> str:
 
 def test_enroll_and_list_members(client):
     shop_id = _new_shop(client)
-    a = client.post(f"/shops/{shop_id}/members", json={"name": "Νίκος"})
+    a = client.post(
+        f"/shops/{shop_id}/members", json={"name": "Νίκος", "email": "nikos@example.com"}
+    )
     assert a.status_code == 201
     assert a.json()["serial_number"]
     assert a.json()["stamps"] == 0
-    client.post(f"/shops/{shop_id}/members", json={"name": "Μαρία"})
+    assert a.json()["email"] == "nikos@example.com"
+    client.post(
+        f"/shops/{shop_id}/members", json={"name": "Μαρία", "email": "maria@example.com"}
+    )
     listed = client.get(f"/shops/{shop_id}/members").json()
     assert len(listed) == 2
 
 
+def test_same_email_does_not_duplicate(client):
+    shop_id = _new_shop(client)
+    body = {"name": "Νίκος", "email": "nikos@example.com"}
+    first = client.post(f"/shops/{shop_id}/members", json=body).json()
+    again = client.post(f"/shops/{shop_id}/members", json=body).json()
+    assert again["id"] == first["id"]
+    assert len(client.get(f"/shops/{shop_id}/members").json()) == 1
+
+
+def test_enroll_bad_email_is_422(client):
+    shop_id = _new_shop(client)
+    r = client.post(f"/shops/{shop_id}/members", json={"name": "X", "email": "nope"})
+    assert r.status_code == 422
+
+
 def test_enroll_unknown_shop_is_404(client):
-    assert client.post("/shops/shop-404/members", json={"name": "X"}).status_code == 404
+    r = client.post("/shops/shop-404/members", json={"name": "X", "email": "x@example.com"})
+    assert r.status_code == 404
 
 
 def test_add_stamp(client):
     shop_id = _new_shop(client)
-    mid = client.post(f"/shops/{shop_id}/members", json={"name": "Νίκος"}).json()["id"]
+    mid = client.post(
+        f"/shops/{shop_id}/members", json={"name": "Νίκος", "email": "nikos@example.com"}
+    ).json()["id"]
     r = client.post(f"/members/{mid}/stamp")
     assert r.status_code == 200
     assert r.json()["stamps"] == 1
@@ -152,7 +175,9 @@ def test_add_stamp(client):
 
 def test_member_pkpass_download(client):
     shop_id = _new_shop(client)
-    mid = client.post(f"/shops/{shop_id}/members", json={"name": "Νίκος"}).json()["id"]
+    mid = client.post(
+        f"/shops/{shop_id}/members", json={"name": "Νίκος", "email": "nikos@example.com"}
+    ).json()["id"]
     r = client.get(f"/members/{mid}/pkpass")
     assert r.status_code == 200
     assert r.headers["content-type"] == "application/vnd.apple.pkpass"

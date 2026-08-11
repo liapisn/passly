@@ -26,23 +26,32 @@ def _shop(repo) -> str:
 def test_enroll_unknown_shop_raises():
     svc, _ = _svc()
     with pytest.raises(ShopNotFound):
-        svc.enroll("shop-404", "Νίκος")
+        svc.enroll("shop-404", "Νίκος", "nikos@example.com")
 
 
 def test_enroll_mints_unique_serials():
     svc, shops = _svc()
     sid = _shop(shops)
-    a = svc.enroll(sid, "Νίκος")
-    b = svc.enroll(sid, "Μαρία")
+    a = svc.enroll(sid, "Νίκος", "nikos@example.com")
+    b = svc.enroll(sid, "Μαρία", "maria@example.com")
     assert a.serial_number != b.serial_number
     assert a.stamps == 0
     assert {m.name for m in svc.list_for_shop(sid)} == {"Νίκος", "Μαρία"}
 
 
+def test_same_email_returns_same_member():
+    svc, shops = _svc()
+    sid = _shop(shops)
+    a = svc.enroll(sid, "Νίκος", "nikos@example.com")
+    again = svc.enroll(sid, "Nikolas", "NIKOS@example.com")  # case-insensitive
+    assert again.id == a.id  # idempotent — one pass per email per shop
+    assert len(svc.list_for_shop(sid)) == 1
+
+
 def test_add_stamp_increments():
     svc, shops = _svc()
     sid = _shop(shops)
-    m = svc.enroll(sid, "Νίκος")
+    m = svc.enroll(sid, "Νίκος", "nikos@example.com")
     svc.add_stamp(m.id)
     svc.add_stamp(m.id)
     assert svc.get(m.id).stamps == 2

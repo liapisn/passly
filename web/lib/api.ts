@@ -45,6 +45,36 @@ export async function getShop(shopId: string): Promise<ShopRecord> {
   return res.json();
 }
 
+// ── members (customer passes) ──
+
+export type MemberRecord = {
+  id: string;
+  shop_id: string;
+  name: string;
+  email: string;
+  serial_number: string;
+  stamps: number;
+  created_at: string;
+};
+
+export async function enrollMember(
+  shopId: string,
+  name: string,
+  email: string,
+): Promise<MemberRecord> {
+  const res = await fetch(`${API_URL}/shops/${shopId}/members`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email }),
+  });
+  if (!res.ok) throw new Error(`Enrollment failed (${res.status})`);
+  return res.json();
+}
+
+export function memberPassUrl(memberId: string): string {
+  return `${API_URL}/members/${memberId}/pkpass`;
+}
+
 // ── campaigns ──
 
 export type CampaignStatus =
