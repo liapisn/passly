@@ -1,19 +1,31 @@
-"""Member use cases — enrolling a customer in a shop's pass and tracking stamps.
+"""Member use cases — enrolling a customer, tracking stamps, re-issuing passes.
 
-Depends only on the ShopRepository + MemberRepository ports.
+Depends only on ports (ShopRepository, MemberRepository, optional EmailSender),
+so it is testable with fakes and never imports the framework.
 """
 
 from __future__ import annotations
 
 from ..domain.errors import MemberNotFound, ShopNotFound
 from ..domain.models import Member, MemberRecord
-from ..domain.ports import MemberRepository, ShopRepository
+from ..domain.ports import EmailSender, MemberRepository, ShopRepository
 
 
 class MemberService:
-    def __init__(self, shops: ShopRepository, members: MemberRepository) -> None:
+    def __init__(
+        self,
+        shops: ShopRepository,
+        members: MemberRepository,
+        email_sender: EmailSender | None = None,
+        pass_link_base: str = "",
+    ) -> None:
         self._shops = shops
         self._members = members
+        self._email = email_sender
+        self._pass_link_base = pass_link_base.rstrip("/")
+
+    def find(self, shop_id: str, email: str) -> MemberRecord | None:
+        return self._members.find_by_email(shop_id, email)
 
     def enroll(self, shop_id: str, name: str, email: str) -> MemberRecord:
         if self._shops.get(shop_id) is None:
@@ -22,7 +34,9 @@ class MemberService:
         existing = self._members.find_by_email(shop_id, email)
         if existing is not None:
             return existing
-        return self._members.add(Member(shop_id=shop_id, name=name, email=email))
+        member = self._members.add(Member(shop_id=shop_id, name=name, email=email))
+        self._email_pass(member)  # new member → send them their pass link
+        return member
 
     def list_for_shop(self, shop_id: str) -> list[MemberRecord]:
         if self._shops.get(shop_id) is None:
@@ -47,3 +61,23 @@ class MemberService:
         else:
             update = {"stamps": member.stamps + 1}
         return self._members.save(member.model_copy(update=update))
+
+    def _email_pass(self, member: MemberRecord) -> None:
+        """Best-effort — email the customer a link to their pass. A send failure
+        must never break enrolment."""
+        if self._email is None:
+            return
+        link = f"{self._pass_link_base}/members/{member.id}/pkpass"
+        try:
+            self._email.send(
+                to=member.email,
+                subject="Η κάρτα σου είναι έτοιμη 🍪",
+                body=(
+                    f"Γεια σου {member.name or 'φίλε'},<br><br>"
+                    f'Η κάρτα πιστότητάς σου είναι έτοιμη — '
+                    f'<a href="{link}">πρόσθεσέ τη στο Apple Wallet</a>.<br><br>'
+                    f"Κράτα αυτό το email για να την ξανακατεβάσεις όποτε θες."
+                ),
+            )
+        except Exception:  # noqa: BLE001 — email is best-effort, never blocks enrolment
+            pass

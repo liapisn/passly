@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from app.adapters.outbound.email_sender import FakeEmailSender
 from app.adapters.outbound.memory_member_repository import InMemoryMemberRepository
 from app.adapters.outbound.memory_shop_repository import InMemoryShopRepository
 from app.domain.errors import MemberNotFound, ShopNotFound
@@ -80,3 +81,20 @@ def test_get_unknown_member_raises():
     svc, _ = _svc()
     with pytest.raises(MemberNotFound):
         svc.get("mem-404")
+
+
+def test_new_member_is_emailed_their_pass_once():
+    shops = InMemoryShopRepository()
+    members = InMemoryMemberRepository()
+    email = FakeEmailSender()
+    svc = MemberService(shops, members, email, "https://passly.test")
+    sid = _shop(shops)
+
+    m = svc.enroll(sid, "Νίκος", "nikos@example.com")
+    assert len(email.sent) == 1
+    assert email.sent[0]["to"] == "nikos@example.com"
+    assert f"/members/{m.id}/pkpass" in email.sent[0]["body"]
+
+    # Re-enrolling the same email (a re-download) sends no second email.
+    svc.enroll(sid, "Νίκος", "nikos@example.com")
+    assert len(email.sent) == 1

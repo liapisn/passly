@@ -102,20 +102,22 @@ def download_pkpass(
 # ── members: end customers holding a shop's pass ──
 
 
-@router.post(
-    "/shops/{shop_id}/members", response_model=MemberRecord, status_code=201
-)
+@router.post("/shops/{shop_id}/members", response_model=MemberRecord)
 def enroll_member(
     shop_id: str,
     body: EnrollBody,
+    response: Response,
     members: MemberService = Depends(get_member_service),
 ) -> MemberRecord:
-    """Enrol a customer in the shop's pass — mints a unique serial number.
-    Re-enrolling with the same email returns the existing pass."""
+    """Enrol a customer, or return their existing pass. 201 = new member,
+    200 = already a member (re-download). Emails the pass link to new members."""
     try:
-        return members.enroll(shop_id, body.name, body.email)
+        existing = members.find(shop_id, body.email)
+        member = members.enroll(shop_id, body.name, body.email)
     except ShopNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    response.status_code = 200 if existing else 201
+    return member
 
 
 @router.get("/shops/{shop_id}/members", response_model=list[MemberRecord])
