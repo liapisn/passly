@@ -19,16 +19,17 @@ Hex = Annotated[str, Field(pattern=HEX_COLOR.pattern, examples=["#0B5"])]
 
 
 class PassType(StrEnum):
-    """The two pass shapes the demo supports."""
+    """Platform-neutral pass shape. The issuer adapter maps it to each wallet's
+    terms (Apple storeCard / Google loyalty class, Apple coupon / Google offer)."""
 
-    store_card = "storeCard"   # loyalty / stamp card
-    coupon = "coupon"          # a single offer / discount
+    loyalty = "loyalty"   # stamp / points card
+    coupon = "coupon"     # a single offer / discount
 
 
 class PassDesign(BaseModel):
     """Everything the founder edits in the designer and P1 signs into a pass."""
 
-    pass_type: PassType = PassType.store_card
+    pass_type: PassType = PassType.loyalty
     logo_text: str = Field(min_length=1, max_length=40)
     # The hero line on the pass, e.g. "Buy 9, get the 10th free".
     offer_label: str = Field(min_length=1, max_length=40)
@@ -59,6 +60,26 @@ class ShopRecord(Shop):
     """A persisted shop — `Shop` plus a server-assigned id."""
 
     id: str
+
+
+# ── Member (an end customer holding a shop's pass) ──
+
+
+class Member(BaseModel):
+    """A customer enrolling in a shop's loyalty pass."""
+
+    shop_id: str
+    name: str = Field(default="", max_length=80)
+
+
+class MemberRecord(Member):
+    """A persisted member — the unit behind "each customer's pass". Carries the
+    pass's unique `serial_number` and the loyalty state (`stamps`)."""
+
+    id: str
+    serial_number: str  # unique per pass; becomes pass.json serialNumber
+    stamps: int = 0
+    created_at: str = ""
 
 
 # ── Campaign (the crew drafting a launch campaign, gated by the founder) ──

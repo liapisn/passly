@@ -9,20 +9,33 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
+from .adapters.outbound.apple_pass_issuer import ApplePassIssuer
 from .adapters.outbound.crew_gateway import SoloFounderCrewGateway
 from .adapters.outbound.crew_runner import SoloFounderCrewRunner
-from .adapters.outbound.memory_shop_repository import InMemoryShopRepository
+from .adapters.outbound.sqlite_member_repository import SqliteMemberRepository
+from .adapters.outbound.sqlite_shop_repository import SqliteShopRepository
 from .domain.ports import PassSigner
 from .services.campaign_service import CampaignService
 from .services.crew_service import CrewService
+from .services.member_service import MemberService
 from .services.pass_service import PassService
 from .services.shop_service import ShopService
 
 
+def _db_path() -> str:
+    # SQLite file (persists across restarts). Override with PASSLY_DB.
+    default = _API_DIR / "data" / "passly.db"
+    return os.environ.get("PASSLY_DB", str(default))
+
+
 @lru_cache
-def _shop_repository() -> InMemoryShopRepository:
-    # Process-wide singleton so shops created in one request survive to the next.
-    return InMemoryShopRepository()
+def _shop_repository() -> SqliteShopRepository:
+    return SqliteShopRepository(_db_path())
+
+
+@lru_cache
+def _member_repository() -> SqliteMemberRepository:
+    return SqliteMemberRepository(_db_path())
 
 
 @lru_cache
@@ -41,6 +54,10 @@ def get_crew_service() -> CrewService:
 
 def get_campaign_service() -> CampaignService:
     return CampaignService(_shop_repository(), _crew_runner())
+
+
+def get_member_service() -> MemberService:
+    return MemberService(_shop_repository(), _member_repository())
 
 
 # api/ — signing-material paths in .env are resolved relative to here, so the
@@ -71,10 +88,13 @@ def _pass_signer() -> PassSigner:
     return FakeSigner()
 
 
-def get_pass_service() -> PassService:
-    return PassService(
-        _shop_repository(),
+def _pass_issuer() -> ApplePassIssuer:
+    return ApplePassIssuer(
         _pass_signer(),
         team_id=os.environ.get("APPLE_TEAM_ID", "TEAMID0000"),
         pass_type_id=os.environ.get("APPLE_PASS_TYPE_ID", "pass.com.dion.passly-demo"),
     )
+
+
+def get_pass_service() -> PassService:
+    return PassService(_shop_repository(), _member_repository(), _pass_issuer())

@@ -3,7 +3,7 @@
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-export type PassType = "storeCard" | "coupon";
+export type PassType = "loyalty" | "coupon";
 
 export type PassDesign = {
   pass_type: PassType;
@@ -98,7 +98,7 @@ export async function respondCampaign(
 }
 
 export const defaultDesign: PassDesign = {
-  pass_type: "storeCard",
+  pass_type: "loyalty",
   logo_text: "CHUNKY COOKIE BAR",
   offer_label: "Loyalty",
   offer_value: "Στα 9 cookies, το 10ο κέρασμα",

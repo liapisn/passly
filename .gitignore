@@ -5,6 +5,10 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
+# Local data (SQLite demo store)
+*.db
+api/data/
+
 # Node / Next.js
 web/node_modules/
 web/.next/
