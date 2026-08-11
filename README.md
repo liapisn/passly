@@ -109,7 +109,8 @@ app/
   services/   Shop / Crew / Campaign / Member / Pass services — depend only on ports
   adapters/
     inbound/  http.py (FastAPI driving adapter)
-    outbound/ sqlite_shop_repository, sqlite_member_repository,
+    outbound/ db (pool), postgres_shop_repository,
+              postgres_member_repository, postgres_campaign_repository,
               apple_pass_issuer, signer, email_sender,
               crew_gateway, crew_runner                 — driven adapters
   deps.py     composition root (which adapter backs which port)
@@ -117,15 +118,43 @@ app/
 ```
 
 New capabilities drop in as new ports + adapters without touching the services —
-e.g. a Postgres repository, a Google Wallet `PassIssuer`, or another `EmailSender`.
+e.g. a Google Wallet `PassIssuer` or another `EmailSender`.
+
+### Database (Supabase Postgres)
+
+Shops, pass designs, members, and campaigns live in Postgres. The schema is
+[`supabase/migrations/0001_initial_schema.sql`](supabase/migrations/0001_initial_schema.sql)
+— real columns and foreign keys, not JSON blobs:
+
+```
+shops ──1:1── pass_designs      pass presentation, split from merchant identity
+  │
+  ├──1:N── members              one customer's pass: serial_number, stamps, rewards
+  └──1:N── campaigns            a crew run and its open founder gate
+```
+
+Apply it to a fresh project with the Supabase SQL editor, or:
+
+```bash
+psql "$DATABASE_URL" -f supabase/migrations/0001_initial_schema.sql
+```
+
+RLS is enabled on every table with **no policies**: Passly never calls
+PostgREST, so anonymous REST access gets nothing while the API — connecting
+directly as the table owner — is unaffected.
+
+Coming from the old SQLite store? [`scripts/migrate_sqlite_to_postgres.py`](scripts/migrate_sqlite_to_postgres.py)
+carries rows across, preserving member ids and pass serial numbers so already-issued
+passes keep working. It dry-runs by default.
 
 ### Configuration (`api/.env`)
 
-Auto-loaded on startup. Copy `api/.env.example` and fill in:
-Apple signing (`APPLE_CERT_P12` + password, `APPLE_WWDR_CERT`, team / pass-type
-ids) for real `.pkpass` signing; `RESEND_API_KEY` (+ `PASSLY_PUBLIC_URL`) to email
-pass links; `PASSLY_DB` for the SQLite path. Missing keys degrade gracefully
-(unsigned bundle, no-op email sender, MockLLM) so the demo still runs.
+Auto-loaded on startup. Copy `api/.env.example` and fill in `DATABASE_URL`
+(**required** — the API will not start without it). Then, optionally: Apple
+signing (`APPLE_CERT_P12` + password, `APPLE_WWDR_CERT`, team / pass-type ids)
+for real `.pkpass` signing, and `RESEND_API_KEY` (+ `PASSLY_PUBLIC_URL`) to
+email pass links. Those optional keys degrade gracefully when missing (unsigned
+bundle, no-op email sender, MockLLM) so the demo still runs.
 
 Tests:
 
@@ -133,6 +162,17 @@ Tests:
 cd api
 .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/pytest
+```
+
+The suite needs no database — the HTTP and service tests use the in-memory
+repositories. The Postgres adapter tests skip unless you point them at a
+throwaway database (a separate variable from `DATABASE_URL`, because they
+truncate every table):
+
+```bash
+docker run -d --name passly-pg -e POSTGRES_PASSWORD=passly -e POSTGRES_DB=passly -p 55432:5432 postgres:16-alpine
+psql postgresql://postgres:passly@localhost:55432/passly -f ../supabase/migrations/0001_initial_schema.sql
+PASSLY_TEST_DATABASE_URL=postgresql://postgres:passly@localhost:55432/passly .venv/bin/pytest
 ```
 
 ### Web (port 3000)

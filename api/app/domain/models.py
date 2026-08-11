@@ -78,6 +78,15 @@ class Member(BaseModel):
     name: str = Field(default="", max_length=80)
     email: str = Field(pattern=EMAIL.pattern, max_length=120)
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def _normalise_email(cls, v: object) -> object:
+        """Trim and lowercase before the pattern runs, so email is a stable
+        identity. Without it "Nikos@X.com" and "nikos@x.com" enrol as two
+        different customers holding two different passes; the database mirrors
+        the rule with a `email = lower(email)` check."""
+        return v.strip().lower() if isinstance(v, str) else v
+
 
 class MemberRecord(Member):
     """A persisted member — the unit behind "each customer's pass". Carries the

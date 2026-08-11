@@ -12,8 +12,9 @@ from pathlib import Path
 from .adapters.outbound.apple_pass_issuer import ApplePassIssuer
 from .adapters.outbound.crew_gateway import SoloFounderCrewGateway
 from .adapters.outbound.crew_runner import SoloFounderCrewRunner
-from .adapters.outbound.sqlite_member_repository import SqliteMemberRepository
-from .adapters.outbound.sqlite_shop_repository import SqliteShopRepository
+from .adapters.outbound.postgres_campaign_repository import PostgresCampaignRepository
+from .adapters.outbound.postgres_member_repository import PostgresMemberRepository
+from .adapters.outbound.postgres_shop_repository import PostgresShopRepository
 from .domain.ports import EmailSender, PassSigner
 from .services.campaign_service import CampaignService
 from .services.crew_service import CrewService
@@ -22,20 +23,21 @@ from .services.pass_service import PassService
 from .services.shop_service import ShopService
 
 
-def _db_path() -> str:
-    # SQLite file (persists across restarts). Override with PASSLY_DB.
-    default = _API_DIR / "data" / "passly.db"
-    return os.environ.get("PASSLY_DB", str(default))
+@lru_cache
+def _shop_repository() -> PostgresShopRepository:
+    return PostgresShopRepository()
 
 
 @lru_cache
-def _shop_repository() -> SqliteShopRepository:
-    return SqliteShopRepository(_db_path())
+def _member_repository() -> PostgresMemberRepository:
+    return PostgresMemberRepository()
 
 
 @lru_cache
-def _member_repository() -> SqliteMemberRepository:
-    return SqliteMemberRepository(_db_path())
+def _campaign_repository() -> PostgresCampaignRepository:
+    # Storage for campaign gates. Not yet consumed by the crew runner — that
+    # swap lands with the serverless campaign refactor.
+    return PostgresCampaignRepository()
 
 
 @lru_cache
