@@ -10,6 +10,7 @@ import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
+from ...domain.ids import small_id
 from ...domain.models import Member, MemberRecord
 
 
@@ -31,10 +32,11 @@ class SqliteMemberRepository:
 
     def add(self, member: Member) -> MemberRecord:
         with self._conn() as c:
+            # n orders rows only; id + serial are non-sequential smallIds.
             n = c.execute("SELECT COALESCE(MAX(n), 0) + 1 AS n FROM members").fetchone()["n"]
             record = MemberRecord(
-                id=f"mem-{n}",
-                serial_number=f"{member.shop_id}-{n:04d}",
+                id=small_id("mem"),
+                serial_number=small_id("psly"),
                 stamps=0,
                 created_at=datetime.now(UTC).isoformat(timespec="seconds"),
                 **member.model_dump(),

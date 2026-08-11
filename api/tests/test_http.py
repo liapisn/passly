@@ -29,7 +29,7 @@ def test_create_then_get_shop(client):
     created = client.post("/shops", json=valid_shop())
     assert created.status_code == 201
     shop_id = created.json()["id"]
-    assert shop_id == "shop-1"
+    assert shop_id.startswith("shop_")  # non-sequential smallId
 
     fetched = client.get(f"/shops/{shop_id}")
     assert fetched.status_code == 200

@@ -10,6 +10,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
+from ...domain.ids import small_id
 from ...domain.models import Shop, ShopRecord
 
 
@@ -30,8 +31,9 @@ class SqliteShopRepository:
 
     def add(self, shop: Shop) -> ShopRecord:
         with self._conn() as c:
+            # n orders rows only; the id is a non-sequential smallId.
             n = c.execute("SELECT COALESCE(MAX(n), 0) + 1 AS n FROM shops").fetchone()["n"]
-            record = ShopRecord(id=f"shop-{n}", **shop.model_dump())
+            record = ShopRecord(id=small_id("shop"), **shop.model_dump())
             c.execute(
                 "INSERT INTO shops(id, n, json) VALUES(?, ?, ?)",
                 (record.id, n, record.model_dump_json()),

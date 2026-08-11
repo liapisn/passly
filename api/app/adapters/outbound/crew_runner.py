@@ -160,7 +160,8 @@ class SoloFounderCrewRunner:
 
         d = shop.design
         data = {
-            "venture_id": shop.id,  # shop-1 etc. matches ^[a-z][a-z0-9-]*$
+            # Brief schema requires ^[a-z][a-z0-9-]*$; smallIds use "_", so map it.
+            "venture_id": shop.id.replace("_", "-"),
             "name": shop.name,
             "stage": "launched",
             "domain": {

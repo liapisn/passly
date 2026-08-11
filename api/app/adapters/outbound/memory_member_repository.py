@@ -5,19 +5,18 @@ Deterministic ids/serials so tests are stable.
 
 from __future__ import annotations
 
+from ...domain.ids import small_id
 from ...domain.models import Member, MemberRecord
 
 
 class InMemoryMemberRepository:
     def __init__(self) -> None:
         self._members: dict[str, MemberRecord] = {}
-        self._n = 0
 
     def add(self, member: Member) -> MemberRecord:
-        self._n += 1
         record = MemberRecord(
-            id=f"mem-{self._n}",
-            serial_number=f"{member.shop_id}-{self._n:04d}",
+            id=small_id("mem"),
+            serial_number=small_id("psly"),
             stamps=0,
             created_at="",
             **member.model_dump(),
