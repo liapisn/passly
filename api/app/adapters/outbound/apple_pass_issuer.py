@@ -58,7 +58,9 @@ class ApplePassIssuer:
                 {"key": "secondary", "label": d.secondary_label, "value": d.secondary_value}
             )
         if stamps is not None:
-            secondary.append({"key": "stamps", "label": "Σφραγίδες", "value": str(stamps)})
+            secondary.append(
+                {"key": "stamps", "label": "Σφραγίδες", "value": f"{stamps}/{d.stamps_goal}"}
+            )
 
         fields: dict = {
             "primaryFields": [
@@ -85,7 +87,9 @@ class ApplePassIssuer:
             "barcodes": [
                 {
                     "format": "PKBarcodeFormatQR",
-                    "message": d.barcode_message or (serial_number or shop.id),
+                    # For a member pass the QR is the member's serial so a scan
+                    # identifies exactly whose card to stamp; template falls back.
+                    "message": serial_number or d.barcode_message or shop.id,
                     "messageEncoding": "iso-8859-1",
                 }
             ],

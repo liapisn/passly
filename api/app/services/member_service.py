@@ -36,5 +36,14 @@ class MemberService:
         return member
 
     def add_stamp(self, member_id: str) -> MemberRecord:
+        """+1 stamp. On reaching the shop's stamps_goal, the card completes:
+        a reward is granted and the stamp count resets to 0."""
         member = self.get(member_id)
-        return self._members.save(member.model_copy(update={"stamps": member.stamps + 1}))
+        shop = self._shops.get(member.shop_id)
+        goal = shop.design.stamps_goal if shop else 10
+
+        if member.stamps + 1 >= goal:
+            update = {"stamps": 0, "rewards": member.rewards + 1}
+        else:
+            update = {"stamps": member.stamps + 1}
+        return self._members.save(member.model_copy(update=update))
