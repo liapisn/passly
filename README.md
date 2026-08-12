@@ -76,6 +76,24 @@ loyalty stamp counting with rewards, pass re-download, and emailed pass links.
 See the crew repo's [`docs/roadmap.md`](https://github.com/liapisn/solo-founder-crew/blob/main/docs/roadmap.md)
 for the full roadmap.
 
+## Running the demo
+
+Passly runs **locally** — web and API on the laptop, Postgres on Supabase.
+Nothing is deployed. Once set up (below), one command runs everything:
+
+```bash
+python scripts/dev.py --tunnel
+```
+
+`--tunnel` opens a public HTTPS URL so a customer's phone can open the join
+page and add the pass to Apple Wallet. Because the web app proxies the API
+under `/api`, that single URL covers both — no CORS, and no rebuild when the
+tunnel hostname changes. Needs `cloudflared` (`brew install cloudflared`);
+ngrok also works but its free tier shows an interstitial page to phones.
+
+See [`docs/demo-runbook.md`](docs/demo-runbook.md) for the demo flow, the
+pre-demo checklist, and troubleshooting.
+
 ## Local development
 
 Requires Python 3.11–3.13 and Node 20+. The `solo-founder-crew` repo must be

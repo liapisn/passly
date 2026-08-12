@@ -22,7 +22,9 @@ jobs:
       # No solo-founder-crew here: the tests fake the CrewGateway at the seam,
       # so the API suite runs without the (private) framework repo present.
       - run: pip install -r requirements-dev.txt
-      - run: ruff check .
+      # ../scripts too: they are real Python (migrations, setup checks, the dev
+      # orchestrator) and were previously outside CI's reach entirely.
+      - run: ruff check . ../scripts
       - run: pytest -q
 
   web:

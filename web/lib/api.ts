@@ -1,7 +1,11 @@
 // Typed client for the Passly FastAPI service. Mirrors api/app/models.py.
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Relative by default: requests go to this same origin under /api, which
+// next.config.ts rewrites to the FastAPI service. That keeps one public URL
+// for the whole demo — a phone opening /join/... reaches the API through the
+// identical hostname, so a tunnel needs no reconfiguration here.
+// Override only to point the browser straight at a different API origin.
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 export type PassType = "loyalty" | "coupon";
 
