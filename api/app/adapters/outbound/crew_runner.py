@@ -15,9 +15,9 @@ what lets CI run the suite framework-free.
 from __future__ import annotations
 
 import asyncio
-import itertools
 import os
 
+from ...domain.ids import small_id
 from ...domain.models import (
     CampaignState,
     CampaignStatus,
@@ -71,7 +71,18 @@ class SoloFounderCrewRunner:
         self._futures: dict[str, asyncio.Future] = {}
         self._tasks: dict[str, asyncio.Task] = {}
         self._hitl = _WebHITL(self._states, self._futures)
-        self._counter = itertools.count(1)
+
+    @staticmethod
+    def new_thread_id() -> str:
+        """A globally unique id for one campaign run.
+
+        Deliberately not a counter. `thread_id` is the primary key of the
+        `campaigns` table and the LangGraph checkpointer's thread key, so a
+        per-process sequence (`camp-1`, `camp-2`, …) collides two ways: a
+        second instance starts again at 1, and so does this one after a
+        restart. Random ids make both harmless.
+        """
+        return small_id("camp")
 
     async def start(self, shop: ShopRecord) -> str:
         from solo_founder_crew.crew import Crew
@@ -86,7 +97,7 @@ class SoloFounderCrewRunner:
             hitl=self._hitl,
             tools=self._publisher_registry(),
         )
-        thread_id = f"camp-{next(self._counter)}"
+        thread_id = self.new_thread_id()
         self._states[thread_id] = CampaignState(
             thread_id=thread_id, status=CampaignStatus.drafting
         )
