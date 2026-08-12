@@ -8,3 +8,4 @@ uvicorn[standard]>=0.30
 python-dotenv>=1.0  # auto-load api/.env (signing config)
 pillow>=10          # solid-colour pass icons
 cryptography>=42    # Apple .pkpass PKCS#7 signing (AppleP12Signer)
+psycopg[binary,pool]>=3.2  # Postgres (Supabase) driver + connection pool

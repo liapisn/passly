@@ -39,6 +39,20 @@ class MemberRepository(Protocol):
     def save(self, member: MemberRecord) -> MemberRecord: ...
 
 
+class CampaignRepository(Protocol):
+    """Durable storage for campaign runs and their open founder gate.
+
+    Distinct from `CampaignRunner`, which *drives* a run: this only records
+    where a run got to. Splitting them is what lets `start`, poll, and
+    `respond` be served by three different processes — the runner rebuilds
+    itself from the checkpointer, the gate comes from here.
+    """
+
+    def save(self, shop_id: str, state: CampaignState) -> CampaignState: ...
+
+    def get(self, thread_id: str) -> CampaignState | None: ...
+
+
 class EmailSender(Protocol):
     """Sends a customer their pass link. Real adapter uses Resend; a fake records
     sends for dev/CI. Platform-neutral — the email body is just text/HTML."""
