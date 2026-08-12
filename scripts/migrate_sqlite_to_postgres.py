@@ -142,7 +142,8 @@ def migrate(shops: list[dict], members: list[dict], dsn: str, *, commit: bool) -
                     print(f"  member {member['id']}  already present — skipped")
                     continue
                 members_written += 1
-                note = f" (email lowercased from {member['email']!r})" if email != member["email"] else ""
+                changed = email != member["email"]
+                note = f" (email lowercased from {member['email']!r})" if changed else ""
                 print(f"  member {member['id']}  {email}  serial={member['serial_number']}{note}")
 
             print(
