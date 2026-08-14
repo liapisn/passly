@@ -107,9 +107,10 @@ class PassSigner(Protocol):
 
 
 class PassIssuer(Protocol):
-    """Turns a shop (and optionally a member's serial + stamps) into a wallet
-    pass. Apple issues a `.pkpass`; a future Google Wallet issuer implements the
-    same port. The domain and services stay platform-neutral behind it.
+    """Turns a shop (and optionally a member's serial + stamps + name) into a
+    wallet pass. Apple issues a `.pkpass`; a future Google Wallet issuer
+    implements the same port. The domain and services stay platform-neutral
+    behind it.
     """
 
     def issue(
@@ -118,4 +119,5 @@ class PassIssuer(Protocol):
         *,
         serial_number: str | None = None,
         stamps: int | None = None,
+        member_name: str | None = None,
     ) -> IssuedPass: ...
