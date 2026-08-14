@@ -174,6 +174,27 @@ for real `.pkpass` signing, and `RESEND_API_KEY` (+ `PASSLY_PUBLIC_URL`) to
 email pass links. Those optional keys degrade gracefully when missing (unsigned
 bundle, no-op email sender, MockLLM) so the demo still runs.
 
+### Repository secrets (GitHub Actions — *not* `api/.env`)
+
+One setting lives in GitHub rather than in `api/.env`, because CI uses it and
+the app never does:
+
+| Secret | Used by | What it does |
+|--------|---------|--------------|
+| `DISCORD_WEBHOOK_URL` | [`pr-review-notify.yml`](.github/workflows/pr-review-notify.yml) | Posts a PR to Discord once CI passes, so the founder can review and merge — the notify half of the Dev Flow merge gate |
+
+Putting it in `api/.env` would do nothing: it is read as
+`${{ secrets.DISCORD_WEBHOOK_URL }}` inside the workflow, never by the FastAPI
+service.
+
+To set it: in Discord, target channel → **Edit Channel → Integrations →
+Webhooks → New Webhook → Copy Webhook URL**. Then in GitHub, repo **Settings →
+Secrets and variables → Actions → New repository secret**, named
+`DISCORD_WEBHOOK_URL`.
+
+Optional — with the secret absent the notify job logs a warning and no-ops, so
+CI stays green either way.
+
 Tests:
 
 ```bash
