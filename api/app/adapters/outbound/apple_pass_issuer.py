@@ -37,8 +37,9 @@ class ApplePassIssuer:
         *,
         serial_number: str | None = None,
         stamps: int | None = None,
+        member_name: str | None = None,
     ) -> IssuedPass:
-        pass_json = self._pass_json(shop, serial_number, stamps)
+        pass_json = self._pass_json(shop, serial_number, stamps, member_name)
         content = self._assemble(shop, pass_json)
         name = serial_number or shop.id
         return IssuedPass(
@@ -49,13 +50,21 @@ class ApplePassIssuer:
         )
 
     def _pass_json(
-        self, shop: ShopRecord, serial_number: str | None, stamps: int | None
+        self,
+        shop: ShopRecord,
+        serial_number: str | None,
+        stamps: int | None,
+        member_name: str | None,
     ) -> dict:
         d = shop.design
         secondary = []
-        if d.secondary_label or d.secondary_value:
+        # On a member's pass the holder's name fills the design's secondary slot
+        # (the "Member" / "—" placeholder the founder sees in the designer); the
+        # template pass, and a member who gave no name, keep the design value.
+        secondary_value = member_name or d.secondary_value
+        if d.secondary_label or secondary_value:
             secondary.append(
-                {"key": "secondary", "label": d.secondary_label, "value": d.secondary_value}
+                {"key": "secondary", "label": d.secondary_label, "value": secondary_value}
             )
         if stamps is not None:
             secondary.append(

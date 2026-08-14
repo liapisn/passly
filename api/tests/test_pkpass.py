@@ -98,6 +98,23 @@ def test_issue_for_member_uses_serial_and_stamps():
     assert pj["barcodes"][0]["message"] == member.serial_number  # QR identifies the member
     stamp_fields = [f for f in pj["storeCard"]["secondaryFields"] if f["key"] == "stamps"]
     assert stamp_fields and stamp_fields[0]["value"] == "3/10"  # N/goal
+    member_fields = [f for f in pj["storeCard"]["secondaryFields"] if f["key"] == "secondary"]
+    assert member_fields[0]["label"] == "Member"  # the design's label is kept
+    assert member_fields[0]["value"] == "Νίκος"   # …the placeholder "—" is not
+
+
+def test_member_field_falls_back_to_the_design_value():
+    """No name given at enrolment → the design's own value stands; and the
+    template pass never shows a member name."""
+    svc, shops, members = _service()
+    shop = _shop(shops)
+    member = members.add(Member(shop_id=shop.id, email="anon@example.com"))
+
+    for issued in (svc.issue_for_member(member.id), svc.issue_for_shop(shop.id)):
+        with zipfile.ZipFile(io.BytesIO(issued.content)) as z:
+            pj = json.loads(z.read("pass.json"))
+        secondary = [f for f in pj["storeCard"]["secondaryFields"] if f["key"] == "secondary"]
+        assert secondary[0]["value"] == "—"
 
 
 def test_issue_unknown_raises():

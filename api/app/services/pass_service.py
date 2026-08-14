@@ -31,7 +31,8 @@ class PassService:
         return self._issuer.issue(shop)
 
     def issue_for_member(self, member_id: str) -> IssuedPass:
-        """A specific customer's pass — unique serial + current stamp count."""
+        """A specific customer's pass — unique serial, current stamp count and
+        the holder's name."""
         member = self._members.get(member_id)
         if member is None:
             raise MemberNotFound(member_id)
@@ -39,5 +40,8 @@ class PassService:
         if shop is None:
             raise ShopNotFound(member.shop_id)
         return self._issuer.issue(
-            shop, serial_number=member.serial_number, stamps=member.stamps
+            shop,
+            serial_number=member.serial_number,
+            stamps=member.stamps,
+            member_name=member.name,
         )
