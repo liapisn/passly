@@ -1,10 +1,16 @@
 name: PR review notify
 
-# When CI succeeds on a pull request, post the PR to Discord for the founder
-# to review (the merge gate as a HITL gate — see solo-founder-crew/docs/dev-flow.md).
-# Notify-only: the founder reviews/merges on GitHub via the link. No bot or
-# merge token here — that's the interactive variant, deliberately out of scope
-# for this step.
+# When CI finishes on a pull request, post the outcome to Discord — green *and*
+# red (the merge gate as a HITL gate — see solo-founder-crew/docs/dev-flow.md).
+#
+# Green is a review request: the founder reviews/merges on GitHub via the link.
+# Red names the jobs and steps that failed and points at `/fix <pr>`, the crew
+# daemon's command for sending the engineering role back at its own branch.
+# Without the red path a failing PR was silent: the crew's run ends when the
+# branch is pushed, so nobody — human or agent — learned that CI went down.
+#
+# Notify-only either way: no bot and no merge token here. Triggering the fix
+# stays an explicit founder action, which is what keeps the retry bounded.
 #
 # Setup: create a Discord channel webhook (Channel → Edit → Integrations →
 # Webhooks → New Webhook → Copy URL) and add it as a repo secret named
@@ -19,16 +25,19 @@ on:
 permissions:
   pull-requests: read
   contents: read
+  actions: read # reading which jobs failed, for the red notification
 
 jobs:
   notify:
-    # Only when CI passed AND it ran for a pull request.
+    # Both outcomes, but only for pull requests. `cancelled` and `skipped` are
+    # deliberately excluded: neither says anything about the change.
     if: >
-      github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.conclusion == 'success' ||
+       github.event.workflow_run.conclusion == 'failure') &&
       github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Post passing PR to Discord
+      - name: Post CI outcome to Discord
         uses: actions/github-script@v7
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -40,6 +49,7 @@ jobs:
               return;
             }
             const run = context.payload.workflow_run;
+            const passed = run.conclusion === "success";
 
             // PRs attached to the run; fall back to open PRs on the head branch.
             let prs = run.pull_requests || [];
@@ -53,8 +63,33 @@ jobs:
               prs = data;
             }
             if (prs.length === 0) {
-              core.info("CI passed but no open PR found for this run — nothing to notify.");
+              core.info(`CI ${run.conclusion} but no open PR found for this run — nothing to notify.`);
               return;
+            }
+
+            // Which jobs failed, and which step inside each. Named rather than
+            // log-dumped: the log excerpt is the crew's job at /fix time, where
+            // there is a token and room to read the whole thing.
+            let failedSummary = "";
+            if (!passed) {
+              const { data: jobsData } = await github.rest.actions.listJobsForWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: run.id,
+                filter: "latest",
+              });
+              const failed = (jobsData.jobs || []).filter((j) => j.conclusion === "failure");
+              failedSummary = failed
+                .map((j) => {
+                  const step = (j.steps || []).find((s) => s.conclusion === "failure");
+                  const where = step ? ` — step \`${step.name}\`` : "";
+                  return `• [\`${j.name}\`](${j.html_url})${where}`;
+                })
+                .join("\n")
+                .slice(0, 1024);
+              if (!failedSummary) {
+                failedSummary = `• [see the run](${run.html_url})`;
+              }
             }
 
             for (const ref of prs) {
@@ -63,19 +98,37 @@ jobs:
                 repo: context.repo.repo,
                 pull_number: ref.number,
               });
+
+              const fields = [
+                { name: "Author", value: pr.user.login, inline: true },
+                { name: "Branch", value: `${pr.head.ref} → ${pr.base.ref}`.slice(0, 256), inline: true },
+                { name: "Changes", value: `+${pr.additions} / −${pr.deletions} · ${pr.changed_files} files`, inline: true },
+              ];
+              if (passed) {
+                fields.push({
+                  name: "State",
+                  value: pr.draft ? "Draft — promote to ready when you are happy" : "Ready for review",
+                  inline: false,
+                });
+              } else {
+                fields.push({ name: "Failed", value: failedSummary, inline: false });
+                fields.push({
+                  name: "Send the crew at it",
+                  value: `\`/fix ${pr.number}\` — the engineering role reads the failing job and pushes a fix to this branch.`,
+                  inline: false,
+                });
+              }
+
               const payload = {
                 username: "solo-founder-crew",
                 embeds: [{
                   title: `PR #${pr.number}: ${pr.title}`.slice(0, 256),
                   url: pr.html_url,
-                  description: "✅ CI passed — ready for your review.",
-                  color: 3066993,
-                  fields: [
-                    { name: "Author", value: pr.user.login, inline: true },
-                    { name: "Branch", value: `${pr.head.ref} → ${pr.base.ref}`.slice(0, 256), inline: true },
-                    { name: "Changes", value: `+${pr.additions} / −${pr.deletions} · ${pr.changed_files} files`, inline: true },
-                    { name: "State", value: pr.draft ? "Draft — promote to ready when you are happy" : "Ready for review", inline: false },
-                  ],
+                  description: passed
+                    ? "✅ CI passed — ready for your review."
+                    : "❌ CI failed — nothing merges until this is green.",
+                  color: passed ? 3066993 : 15158332,
+                  fields,
                   footer: { text: `${context.repo.owner}/${context.repo.repo}` },
                 }],
               };
@@ -87,6 +140,6 @@ jobs:
               if (!res.ok) {
                 core.setFailed(`Discord webhook returned ${res.status}: ${await res.text()}`);
               } else {
-                core.info(`Notified Discord for PR #${pr.number}.`);
+                core.info(`Notified Discord for PR #${pr.number} (${run.conclusion}).`);
               }
             }
