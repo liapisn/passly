@@ -8,8 +8,15 @@ import json
 import zipfile
 
 import pytest
+from PIL import Image
 
-from app.adapters.outbound.apple_pass_issuer import ApplePassIssuer, _hex_to_rgb
+from app.adapters.outbound.apple_pass_issuer import (
+    _ICON_PATH,
+    _LOGO_PATH,
+    ApplePassIssuer,
+    _hex_to_rgb,
+    _render,
+)
 from app.adapters.outbound.memory_member_repository import InMemoryMemberRepository
 from app.adapters.outbound.memory_shop_repository import InMemoryShopRepository
 from app.adapters.outbound.signer import FakeSigner
@@ -83,6 +90,23 @@ def test_issue_for_shop_is_a_valid_bundle():
         manifest = json.loads(z.read("manifest.json"))
         for name, digest in manifest.items():
             assert hashlib.sha1(z.read(name)).hexdigest() == digest
+
+
+def test_logo_is_the_wordmark_and_leaves_the_venue_title_room():
+    """Each slot gets the artwork shaped for it — the wordmark on the wide logo
+    strip, the round badge on the square icon — and the logo takes well under
+    Apple's 160pt strip so Wallet can draw the venue title beside it instead of
+    truncating it to a single letter."""
+    shop = _shop(InMemoryShopRepository())
+    with zipfile.ZipFile(io.BytesIO(_issuer().issue(shop).content)) as z:
+        pj = json.loads(z.read("pass.json"))
+        logo = Image.open(io.BytesIO(z.read("logo.png")))
+        icon = Image.open(io.BytesIO(z.read("icon.png")))
+    assert pj["logoText"] == shop.design.logo_text
+    assert logo.width <= 80 and logo.height <= 50
+    assert icon.size == (29, 29)  # Apple's icon size, exactly
+    # Same size, different bytes → the two slots really do draw different art.
+    assert _render(80, 27, "#000000", _LOGO_PATH) != _render(80, 27, "#000000", _ICON_PATH)
 
 
 def test_issue_for_member_uses_serial_and_stamps():
