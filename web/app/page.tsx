@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PassPreview } from "@/components/PassPreview";
+import { HowItWorks } from "@/components/HowItWorks";
+import { Faq } from "@/components/Faq";
 import { API_URL, defaultDesign, demoLogoSrc } from "@/lib/api";
 
 export default function Home() {
@@ -50,6 +52,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      <HowItWorks />
+      <Faq />
     </main>
   );
 }
