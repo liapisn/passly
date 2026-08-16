@@ -20,7 +20,7 @@ involved — which is the whole customer half of the demo.
 
 ## Why one tunnel is enough
 
-Every page is a client component, so API calls happen in the visitor's browser.
+API calls happen in the visitor's browser — the app pages are client components.
 Rather than exposing two origins, the web app proxies the API under `/api`
 (`web/next.config.ts`), so:
 

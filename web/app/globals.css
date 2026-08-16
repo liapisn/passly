@@ -30,7 +30,8 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-body), system-ui, sans-serif;
+  /* --font-greek carries the Greek glyphs the brand faces lack. */
+  font-family: var(--font-body), var(--font-greek), system-ui, sans-serif;
   /* Faint grain so the paper reads as a surface, not a flat fill. */
   background-image: radial-gradient(
     var(--line) 0.5px,
@@ -40,7 +41,7 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-display), system-ui, sans-serif;
+  font-family: var(--font-display), var(--font-greek), system-ui, sans-serif;
 }
 
 @keyframes rise {

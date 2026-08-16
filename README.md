@@ -41,7 +41,7 @@ per shop).
 
 | Route | What |
 |-------|------|
-| `/` | Landing — hero + live API status |
+| `/` | Landing — Greek problem-first hero, shop scenarios, objections + live API status |
 | `/design` | Pass designer — edit + live preview, save, and links onward |
 | `/join/[shopId]` | Customer join / re-download — name + email → your pass |
 | `/shops/[id]/campaign` | Crew campaign review — draft → approve / send back / discard |
@@ -225,3 +225,9 @@ npm run dev
 
 Open http://localhost:3000 — the status card confirms the
 Next.js → FastAPI → solo-founder-crew chain is live.
+
+`NEXT_PUBLIC_SITE_URL` is the origin the landing page uses for its canonical
+link, OG tags and JSON-LD ids. Leave it unset while nothing is deployed (it
+falls back to `http://localhost:3000`); set it the day Passly has a domain.
+The keyword and schema decisions behind that page are in
+[`docs/seo-keyword-map.md`](docs/seo-keyword-map.md).
