@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 
 // The API is proxied under /api rather than called on its own origin.
 //
-// Every page here is a client component, so API calls happen in the visitor's
-// browser — including on a customer's phone during the demo. Same-origin means
+// Every API call here happens in the visitor's browser — the app pages are
+// client components — including on a customer's phone. Same-origin means
 // one public URL to share, no CORS, and no rebuilding the app when a tunnel
 // hands out a new hostname (NEXT_PUBLIC_API_URL stays the literal "/api").
 //
