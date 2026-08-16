@@ -19,10 +19,20 @@ from ...domain.issued_pass import IssuedPass
 from ...domain.models import PassType, ShopRecord
 from ...domain.ports import PassSigner
 
-# Shop logo used (with the shop's permission) for the pass icon/logo. Bundled
-# for the single-shop demo; per-shop logos are a go-live generalisation.
-_LOGO_PATH = Path(__file__).resolve().parent.parent.parent / "assets" / "pass-logo.png"
+# Shop artwork used (with the shop's permission). Bundled for the single-shop
+# demo; per-shop art is a go-live generalisation. Two files, because Apple's two
+# slots have opposite shapes: the round badge fits the square icon, the
+# horizontal wordmark (the same one the web designer previews) fits the wide
+# logo strip, where the badge shrank to an illegible circle.
+_ASSETS = Path(__file__).resolve().parent.parent.parent / "assets"
+_ICON_PATH = _ASSETS / "pass-icon.png"
+_LOGO_PATH = _ASSETS / "pass-logo.png"
 _CHIP = "#F5E6C8"  # light chip so a dark logo stays legible on any pass colour
+# Apple's logo strip allows 160×50 (@1x); we use half its width, and only the
+# height the wordmark needs. Wallet draws logoText — the venue title — beside
+# the logo at a font size pass.json cannot set, so leaving it room is the only
+# way to stop it truncating to a single letter.
+_LOGO_BOX = (80, 27)
 
 
 class ApplePassIssuer:
@@ -106,12 +116,14 @@ class ApplePassIssuer:
         }
 
     def _assemble(self, shop: ShopRecord, pass_json: dict) -> bytes:
+        bg = shop.design.background_color
+        logo_w, logo_h = _LOGO_BOX
         files: dict[str, bytes] = {
             "pass.json": json.dumps(pass_json, ensure_ascii=False).encode("utf-8"),
-            "icon.png": _render(29, 29, shop.design.background_color),
-            "icon@2x.png": _render(58, 58, shop.design.background_color),
-            "logo.png": _render(160, 50, shop.design.background_color),
-            "logo@2x.png": _render(320, 100, shop.design.background_color),
+            "icon.png": _render(29, 29, bg, _ICON_PATH),
+            "icon@2x.png": _render(58, 58, bg, _ICON_PATH),
+            "logo.png": _render(logo_w, logo_h, bg, _LOGO_PATH),
+            "logo@2x.png": _render(2 * logo_w, 2 * logo_h, bg, _LOGO_PATH),
         }
         manifest = {name: hashlib.sha1(data).hexdigest() for name, data in files.items()}
         manifest_bytes = json.dumps(manifest).encode("utf-8")
@@ -135,16 +147,16 @@ def _hex_to_rgb(hex_color: str) -> str:
     return f"rgb({r}, {g}, {b})"
 
 
-def _render(w: int, h: int, bg_hex: str) -> bytes:
-    """Pass image: the shop logo on a light chip, or a solid colour as fallback."""
+def _render(w: int, h: int, bg_hex: str, art_path: Path) -> bytes:
+    """Pass image: the shop artwork on a light chip, or a solid colour as fallback."""
     from PIL import Image
 
-    if _LOGO_PATH.exists():
+    if art_path.exists():
         canvas = Image.new("RGBA", (w, h), _CHIP)
-        logo = Image.open(_LOGO_PATH).convert("RGBA")
+        art = Image.open(art_path).convert("RGBA")
         pad = round(min(w, h) * 0.12)
-        logo.thumbnail((max(1, w - 2 * pad), max(1, h - 2 * pad)), Image.LANCZOS)
-        canvas.paste(logo, ((w - logo.width) // 2, (h - logo.height) // 2), logo)
+        art.thumbnail((max(1, w - 2 * pad), max(1, h - 2 * pad)), Image.LANCZOS)
+        canvas.paste(art, ((w - art.width) // 2, (h - art.height) // 2), art)
         img = canvas.convert("RGB")
     else:
         img = Image.new("RGB", (w, h), bg_hex)
