@@ -5,7 +5,6 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { Faq } from "@/components/Faq";
 import { API_URL, defaultDesign, demoLogoSrc } from "@/lib/api";
 import { StackStatus } from "@/components/StackStatus";
-import { defaultDesign, demoLogoSrc } from "@/lib/api";
 import { SITE_URL } from "@/lib/seo";
 
 // The landing page is Greek-first — the reader is a shop owner in Greece —
@@ -202,63 +201,3 @@ export default function Home() {
   );
 }
 
-function StackStatus() {
-  const [ok, setOk] = useState<boolean | null>(null);
-
-      {/* ── three shops, three jobs ──────────────────────────────────── */}
-      <section className="border-t border-line py-14" lang="el">
-        <h2 className="font-display text-xs font-bold uppercase tracking-[0.18em] text-muted">
-          Πώς μοιάζει στην πράξη
-        </h2>
-        <div className="mt-6 grid gap-5 md:grid-cols-3">
-          {SCENARIOS.map((s) => (
-            <article
-              key={s.title}
-              className="rounded-2xl border border-line bg-card p-6"
-            >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
-                {s.shop}
-              </p>
-              <h3 className="font-display mt-2 text-xl font-bold tracking-tight">
-                {s.title}
-              </h3>
-              <p className="mt-3 text-sm italic text-muted">{s.job}</p>
-              <p className="mt-3 text-sm">{s.how}</p>
-              <p className="mt-3 text-xs text-muted/80" lang="en">
-                {s.shopEn} — {s.howEn}
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ── the objections, answered ─────────────────────────────────── */}
-      <section className="border-t border-line py-14" lang="el">
-        <h2 className="font-display text-xs font-bold uppercase tracking-[0.18em] text-muted">
-          «Ναι, αλλά…»
-        </h2>
-        <dl className="mt-6 grid gap-8 md:grid-cols-3">
-          {OBJECTIONS.map((o) => (
-            <div key={o.question}>
-              <dt className="font-display text-base font-bold tracking-tight">
-                {o.question}
-              </dt>
-              <dd className="mt-2 text-sm text-muted">{o.answer}</dd>
-            </div>
-          ))}
-        </dl>
-        <div className="mt-10 flex items-center gap-4">
-          <Link
-            href="/design"
-            className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-          >
-            Ξεκινήστε από το πάσο →
-          </Link>
-          <span className="text-xs text-muted">
-            Δοκιμαστική έκδοση · εικονικά δεδομένα.
-          </span>
-        </div>
-      </section>
-    </main>
-  );
-}
