@@ -5,10 +5,10 @@
 won't be accepted by Apple Wallet, but the whole pipeline and the download
 flow are exercisable.
 
-`AppleP12Signer` — the real signer. Drops in unchanged once the Dion Apple
-Developer cert (a `.p12`) is available; the deps composition switches to it
-automatically when APPLE_CERT_P12 points at a file. `cryptography` is imported
-lazily so dev/CI need neither it exercised nor the cert present.
+`AppleP12Signer` — the real signer, in use. The Dion Apple Developer cert is in
+place (team `AVN9H8BY3X`, pass type `pass.com.passly`) and `deps.py` switches to
+this signer automatically when APPLE_CERT_P12 points at a file. `cryptography` is
+imported lazily so dev/CI need neither it exercised nor the cert present.
 """
 
 from __future__ import annotations
@@ -24,8 +24,8 @@ class FakeSigner:
 class AppleP12Signer:
     """Signs manifest.json with the Pass Type ID cert, chained via Apple WWDR.
 
-    NOTE: written to the standard detached-PKCS#7 recipe but **not yet verified
-    end-to-end** — that happens the moment the Dion `.p12` lands (P1 close).
+    Standard detached PKCS#7. **Verified end-to-end at P1 close:** the passes it
+    signs add to Apple Wallet and the signature verifies against Apple WWDR.
     """
 
     real = True
