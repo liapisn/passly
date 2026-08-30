@@ -73,6 +73,26 @@ Interactive docs at `http://localhost:8000/docs` when the API is running.
 Phases **P0–P4 shipped** — the demo runs end to end with real Apple-signed
 passes and the AI crew. Post-P4 additions: SQLite persistence, the Member model,
 loyalty stamp counting with rewards, pass re-download, and emailed pass links.
+
+**Thesis-side work on this repo is closed (2026-08-30).** Chapter 4 is drafted
+from this demo and Chapters 2–5 are stitched into a v1; nothing here is on the
+thesis critical path, and nothing here needs to change before submission on
+2026-09-30. Two things Ch.4 records about this repo, both deliberate and both
+disclosed in the chapter rather than fixed:
+
+- **The Crew Generator is not exercised here.** `crew_runner.py` imports
+  `make_marketing` from the Role Library directly, so the application uses four
+  of the framework's five components (Ch.4 §4.5.1, §4.9.3).
+- **The web gate is not durable.** `_WebHITL` holds pending gates as in-memory
+  `asyncio.Future` objects, so a campaign gate survives an unbounded wait
+  *within* a process but not a restart of it. `deps.py` already wires a
+  `PostgresCampaignRepository` for the swap; the runner does not consume it yet.
+  The framework's checkpointer property is unimpaired — the application has
+  simply not taken it up (Ch.4 §4.9).
+
+Everything else open on this repo is the post-submission Passly-live track
+(B0–B6 in the crew repo's roadmap), which is deliberately decoupled from the
+thesis and starts in earnest after 30/9.
 See the crew repo's [`docs/roadmap.md`](https://github.com/liapisn/solo-founder-crew/blob/main/docs/roadmap.md)
 for the full roadmap.
 
