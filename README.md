@@ -93,6 +93,17 @@ disclosed in the chapter rather than fixed:
 Everything else open on this repo is the post-submission Passly-live track
 (B0–B6 in the crew repo's roadmap), which is deliberately decoupled from the
 thesis and starts in earnest after 30/9.
+
+**Next up here — Facebook / Instagram post drafts.** The approved campaign is
+currently one blob of Greek text, and the publisher the runner registers is a
+stub, so approving at the gate publishes nothing. The next step is to make the
+artefact channel-shaped: the crew drafts a Facebook post and an Instagram
+caption alongside the email copy, and `/shops/[id]/campaign` renders each as a
+preview of how the post will look in-feed, with a copy button — the shop owner
+posts it from their own account. No Meta API, deliberately: publishing on an
+SMB's behalf needs app review and business verification, while the drafting is
+the part an owner actually wants. That is step **B3** in the crew roadmap.
+
 See the crew repo's [`docs/roadmap.md`](https://github.com/liapisn/solo-founder-crew/blob/main/docs/roadmap.md)
 for the full roadmap.
 
