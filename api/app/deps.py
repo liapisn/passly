@@ -5,7 +5,9 @@ use; swapping an adapter (or overriding one in a test) happens here.
 
 from __future__ import annotations
 
+import base64
 import os
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 
@@ -102,11 +104,35 @@ def _resolve(value: str | None) -> str | None:
 
 
 @lru_cache
+def _from_env_b64(var: str, filename: str) -> str | None:
+    """Materialise base64 signing material from the environment into a file.
+
+    A deployed build has no signing material on disk — `*.p12` and `certs/` are
+    gitignored, so they are absent from any git checkout the builder makes. The
+    cert travels as a base64 environment variable instead, and lands in the
+    process's temp dir because `AppleP12Signer` reads paths, not bytes.
+
+    Returns None when the variable is unset, which is the local case: there the
+    APPLE_CERT_P12 / APPLE_WWDR_CERT paths in api/.env still win.
+    """
+    raw = os.environ.get(var)
+    if not raw:
+        return None
+    path = Path(tempfile.gettempdir()) / filename
+    path.write_bytes(base64.b64decode(raw))
+    return str(path)
+
+
+@lru_cache
 def _pass_signer() -> PassSigner:
     """Real Apple signer when a .p12 + WWDR are configured and present; else the
     fake (a structurally-valid but unsigned bundle) so dev/CI work without a cert."""
-    p12 = _resolve(os.environ.get("APPLE_CERT_P12"))
-    wwdr = _resolve(os.environ.get("APPLE_WWDR_CERT"))
+    p12 = _from_env_b64("APPLE_CERT_P12_B64", "passly.p12") or _resolve(
+        os.environ.get("APPLE_CERT_P12")
+    )
+    wwdr = _from_env_b64("APPLE_WWDR_CERT_B64", "wwdr.cer") or _resolve(
+        os.environ.get("APPLE_WWDR_CERT")
+    )
     if p12 and wwdr and os.path.exists(p12) and os.path.exists(wwdr):
         from .adapters.outbound.signer import AppleP12Signer
 
