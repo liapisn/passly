@@ -20,7 +20,9 @@ API_PROJECT="passly-api"
 WEB_PROJECT="passly"
 
 # The web origin proxies /api/* to the API, so one public hostname covers both.
-WEB_URL="https://passly-nine.vercel.app"
+# Use the custom domain, not the .vercel.app alias: it is what canonical links,
+# OG tags and emailed pass links are built from, and the apex 308s to www.
+WEB_URL="https://www.passly.gr"
 API_URL="https://passly-api.vercel.app"
 
 [ -f api/.env ] || { echo "api/.env not found" >&2; exit 1; }
