@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "pip install -r requirements-vercel.txt",
+  "installCommand": "pip install -r requirements.txt && pip install \"git+https://$SFC_GITHUB_TOKEN@github.com/liapisn/solo-founder-crew.git@main\"",
   "functions": {
     "app/main.py": {
       "maxDuration": 60
