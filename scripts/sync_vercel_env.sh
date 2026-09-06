@@ -32,15 +32,18 @@ from_env() {
 }
 
 # Replace a variable across all three environments of a project.
+#
+# `vercel env add` takes exactly one environment per call, hence the loop, and
+# reads the value from stdin so it never appears in a command line (where `ps`
+# would show it). --force overwrites an existing value, which is what makes
+# this script re-runnable.
 put() { # put <project> <name> <value>
   local project=$1 name=$2 value=$3
   for target in production preview development; do
-    vercel env rm "$name" "$target" \
-      --scope "$SCOPE" --project "$project" --yes >/dev/null 2>&1 || true
+    printf '%s' "$value" |
+      vercel env add "$name" "$target" \
+        --force --yes --scope "$SCOPE" --project "$project" >/dev/null
   done
-  printf '%s' "$value" |
-    vercel env add "$name" production preview development \
-      --scope "$SCOPE" --project "$project" >/dev/null
   echo "  $project ← $name"
 }
 
