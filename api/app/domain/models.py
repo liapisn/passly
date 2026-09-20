@@ -17,6 +17,10 @@ HEX_COLOR = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
 Hex = Annotated[str, Field(pattern=HEX_COLOR.pattern, examples=["#0B5"])]
 
+EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+GR_PHONE = re.compile(r"^\+30\s?6\d{2}\s?\d{3}\s?\d{4}$")
+INSTAGRAM_HANDLE = re.compile(r"^[A-Za-z0-9_.]{1,30}$")
+
 
 class PassType(StrEnum):
     """Platform-neutral pass shape. The issuer adapter maps it to each wallet's
@@ -53,8 +57,16 @@ class PassDesign(BaseModel):
 class Shop(BaseModel):
     """A demo merchant and its pass design."""
 
-    name: str = Field(min_length=1, max_length=80)
+    name: str = Field(min_length=1, max_length=100)
     city: str = Field(default="", max_length=80)
+    # Contact + social fields, editable on the shop details page
+    # (ShopDetails, below) independently of name/city/design.
+    address: str = Field(default="", max_length=200)
+    email: str = Field(default="", max_length=120)
+    phone: str = Field(default="", max_length=20)
+    instagram_handle: str = Field(default="", max_length=30)
+    facebook_page_url: str = Field(default="", max_length=200)
+    google_maps_url: str = Field(default="", max_length=300)
     design: PassDesign
 
 
@@ -64,10 +76,49 @@ class ShopRecord(Shop):
     id: str
 
 
+class ShopDetails(BaseModel):
+    """The shop details page's form contract: name plus the contact/social
+    fields, validated strictly on save. Kept separate from `Shop` so creating
+    a shop from the pass designer doesn't need address/email up front."""
+
+    name: str = Field(min_length=1, max_length=100)
+    address: str = Field(min_length=5, max_length=200)
+    email: str = Field(pattern=EMAIL.pattern, max_length=120)
+    phone: str = Field(default="", max_length=20)
+    instagram_handle: str = Field(default="", max_length=30)
+    facebook_page_url: str = Field(default="", max_length=200)
+    google_maps_url: str = Field(default="", max_length=300)
+
+    @field_validator("phone")
+    @classmethod
+    def _validate_phone(cls, v: str) -> str:
+        if v and not GR_PHONE.match(v):
+            raise ValueError("Έγκυρο ελληνικό νούμερο (π.χ. +30 6XX XXXXXXX)")
+        return v
+
+    @field_validator("instagram_handle")
+    @classmethod
+    def _validate_instagram(cls, v: str) -> str:
+        if v and not INSTAGRAM_HANDLE.match(v):
+            raise ValueError("Μόνο γράμματα, αριθμοί, underscore (χωρίς @)")
+        return v
+
+    @field_validator("facebook_page_url")
+    @classmethod
+    def _validate_facebook(cls, v: str) -> str:
+        if v and not v.startswith("https://facebook.com/"):
+            raise ValueError("Έγκυρη διεύθυνση Facebook (facebook.com/...)")
+        return v
+
+    @field_validator("google_maps_url")
+    @classmethod
+    def _validate_maps(cls, v: str) -> str:
+        if v and "google.com/maps" not in v and "goo.gl/maps" not in v:
+            raise ValueError("Έγκυρη διεύθυνση Google Maps")
+        return v
+
+
 # ── Member (an end customer holding a shop's pass) ──
-
-
-EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 class Member(BaseModel):

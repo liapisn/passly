@@ -17,7 +17,8 @@ from .db import get_pool
 
 # Column list shared by every read, so the joined shape stays in one place.
 _SELECT = """
-    select s.id, s.name, s.city,
+    select s.id, s.name, s.city, s.address, s.email, s.phone,
+           s.instagram_handle, s.facebook_page_url, s.google_maps_url,
            d.pass_type, d.logo_text,
            d.offer_label, d.offer_value,
            d.secondary_label, d.secondary_value,
@@ -34,6 +35,12 @@ def _to_record(row: dict) -> ShopRecord:
         id=row["id"],
         name=row["name"],
         city=row["city"],
+        address=row["address"],
+        email=row["email"],
+        phone=row["phone"],
+        instagram_handle=row["instagram_handle"],
+        facebook_page_url=row["facebook_page_url"],
+        google_maps_url=row["google_maps_url"],
         design=PassDesign(
             pass_type=row["pass_type"],
             logo_text=row["logo_text"],
@@ -60,8 +67,23 @@ class PostgresShopRepository:
         # One transaction: a shop is never visible without its design.
         with self._pool.connection() as conn:
             conn.execute(
-                "insert into shops (id, name, city) values (%s, %s, %s)",
-                (shop_id, shop.name, shop.city),
+                """
+                insert into shops (
+                    id, name, city, address, email, phone,
+                    instagram_handle, facebook_page_url, google_maps_url
+                ) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    shop_id,
+                    shop.name,
+                    shop.city,
+                    shop.address,
+                    shop.email,
+                    shop.phone,
+                    shop.instagram_handle,
+                    shop.facebook_page_url,
+                    shop.google_maps_url,
+                ),
             )
             conn.execute(
                 """
@@ -99,3 +121,29 @@ class PostgresShopRepository:
         with self._pool.connection() as conn:
             row = conn.execute(_SELECT + " where s.id = %s", (shop_id,)).fetchone()
         return _to_record(row) if row else None
+
+    def save(self, shop: ShopRecord) -> ShopRecord:
+        """Persist mutations to the shop-details columns. `design` is owned by
+        the pass designer and isn't written here."""
+        with self._pool.connection() as conn:
+            conn.execute(
+                """
+                update shops
+                   set name = %s, city = %s, address = %s, email = %s,
+                       phone = %s, instagram_handle = %s,
+                       facebook_page_url = %s, google_maps_url = %s
+                 where id = %s
+                """,
+                (
+                    shop.name,
+                    shop.city,
+                    shop.address,
+                    shop.email,
+                    shop.phone,
+                    shop.instagram_handle,
+                    shop.facebook_page_url,
+                    shop.google_maps_url,
+                    shop.id,
+                ),
+            )
+        return shop

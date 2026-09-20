@@ -5,7 +5,7 @@ repository double."""
 from __future__ import annotations
 
 from ..domain.errors import ShopNotFound
-from ..domain.models import Shop, ShopRecord
+from ..domain.models import Shop, ShopDetails, ShopRecord
 from ..domain.ports import ShopRepository
 
 
@@ -24,3 +24,10 @@ class ShopService:
         if record is None:
             raise ShopNotFound(shop_id)
         return record
+
+    def update_details(self, shop_id: str, details: ShopDetails) -> ShopRecord:
+        """Save the shop details page. Leaves `design` untouched — that's the
+        pass designer's field."""
+        record = self.get_shop(shop_id)
+        updated = record.model_copy(update=details.model_dump())
+        return self._repo.save(updated)

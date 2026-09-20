@@ -10,7 +10,7 @@ import pytest
 
 from app.adapters.outbound.memory_shop_repository import InMemoryShopRepository
 from app.domain.errors import ShopNotFound
-from app.domain.models import PassDesign, PassType, Shop
+from app.domain.models import PassDesign, PassType, Shop, ShopDetails
 from app.services.shop_service import ShopService
 
 
@@ -63,3 +63,30 @@ def test_hex_colour_is_normalised_uppercase():
         background_color="#0b5d3b",
     )
     assert design.background_color == "#0B5D3B"
+
+
+def test_update_details_persists_contact_fields_and_keeps_design():
+    svc = _service()
+    record = svc.create_shop(_shop())
+    details = ShopDetails(
+        name="Καφέ Μαρία ΙΙ",
+        address="Οδός Ερμού 12, Σύρος",
+        email="maria@example.com",
+        phone="+30 694 1234567",
+        instagram_handle="cafe_maria",
+        facebook_page_url="https://facebook.com/cafemaria",
+        google_maps_url="https://goo.gl/maps/abc123",
+    )
+    updated = svc.update_details(record.id, details)
+    assert updated.id == record.id
+    assert updated.name == "Καφέ Μαρία ΙΙ"
+    assert updated.address == "Οδός Ερμού 12, Σύρος"
+    assert updated.email == "maria@example.com"
+    assert updated.design == record.design  # untouched by the details form
+
+
+def test_update_details_missing_shop_raises_domain_error():
+    svc = _service()
+    details = ShopDetails(name="X", address="Οδός Χ 1", email="x@example.com")
+    with pytest.raises(ShopNotFound):
+        svc.update_details("shop-404", details)

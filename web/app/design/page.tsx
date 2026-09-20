@@ -232,6 +232,14 @@ export default function DesignPage() {
                 Members &amp; stamps console →
               </Link>
             )}
+            {saved && (
+              <Link
+                href={`/shops/${saved.id}/details`}
+                className="block w-[330px] rounded-xl border border-line bg-card py-3 text-center text-sm font-medium transition hover:border-accent"
+              >
+                Shop details →
+              </Link>
+            )}
             {error && (
               <p className="w-[330px] rounded-lg bg-red-50 px-3 py-2 text-center text-xs text-red-600">
                 {error}

@@ -56,6 +56,67 @@ def test_bad_hex_colour_is_422(client):
     assert res.status_code == 422
 
 
+# ── shop details (contact info + social links) ──
+
+
+def _valid_details() -> dict:
+    return {
+        "name": "Καφέ Μαρία ΙΙ",
+        "address": "Οδός Ερμού 12, Σύρος",
+        "email": "maria@example.com",
+        "phone": "+30 694 1234567",
+        "instagram_handle": "cafe_maria",
+        "facebook_page_url": "https://facebook.com/cafemaria",
+        "google_maps_url": "https://goo.gl/maps/abc123",
+    }
+
+
+def test_update_shop_details(client):
+    shop_id = client.post("/shops", json=valid_shop()).json()["id"]
+    res = client.patch(f"/shops/{shop_id}", json=_valid_details())
+    assert res.status_code == 200
+    body = res.json()
+    assert body["name"] == "Καφέ Μαρία ΙΙ"
+    assert body["address"] == "Οδός Ερμού 12, Σύρος"
+    assert body["instagram_handle"] == "cafe_maria"
+    assert body["design"]["logo_text"] == "ΚΑΦΕ ΜΑΡΙΑ"  # untouched
+
+    fetched = client.get(f"/shops/{shop_id}").json()
+    assert fetched["email"] == "maria@example.com"
+
+
+def test_update_shop_details_unknown_shop_is_404(client):
+    res = client.patch("/shops/shop-404", json=_valid_details())
+    assert res.status_code == 404
+
+
+def test_update_shop_details_short_address_is_422(client):
+    shop_id = client.post("/shops", json=valid_shop()).json()["id"]
+    payload = _valid_details()
+    payload["address"] = "Οδ"
+    res = client.patch(f"/shops/{shop_id}", json=payload)
+    assert res.status_code == 422
+
+
+def test_update_shop_details_bad_phone_is_422(client):
+    shop_id = client.post("/shops", json=valid_shop()).json()["id"]
+    payload = _valid_details()
+    payload["phone"] = "0691234567"
+    res = client.patch(f"/shops/{shop_id}", json=payload)
+    assert res.status_code == 422
+
+
+def test_update_shop_details_optional_fields_may_be_blank(client):
+    shop_id = client.post("/shops", json=valid_shop()).json()["id"]
+    payload = _valid_details()
+    payload["phone"] = ""
+    payload["instagram_handle"] = ""
+    payload["facebook_page_url"] = ""
+    payload["google_maps_url"] = ""
+    res = client.patch(f"/shops/{shop_id}", json=payload)
+    assert res.status_code == 200
+
+
 # ── campaign flow (fake runner injected at the seam) ──
 
 

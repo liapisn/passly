@@ -80,12 +80,20 @@ export default function CampaignPage() {
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-10">
       <header className="mb-8 border-b border-line pb-6">
-        <Link
-          href="/design"
-          className="text-xs font-medium uppercase tracking-[0.18em] text-muted hover:text-accent"
-        >
-          ← Designer
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/design"
+            className="text-xs font-medium uppercase tracking-[0.18em] text-muted hover:text-accent"
+          >
+            ← Designer
+          </Link>
+          <Link
+            href={`/shops/${id}/details`}
+            className="text-xs font-medium uppercase tracking-[0.18em] text-muted hover:text-accent"
+          >
+            Shop details
+          </Link>
+        </div>
         <h1 className="font-display mt-2 text-3xl font-extrabold tracking-tight">
           Launch campaign
         </h1>

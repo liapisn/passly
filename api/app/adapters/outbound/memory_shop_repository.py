@@ -24,3 +24,7 @@ class InMemoryShopRepository:
 
     def get(self, shop_id: str) -> ShopRecord | None:
         return self._shops.get(shop_id)
+
+    def save(self, shop: ShopRecord) -> ShopRecord:
+        self._shops[shop.id] = shop
+        return shop

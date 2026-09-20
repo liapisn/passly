@@ -29,7 +29,28 @@ export type Shop = {
   design: PassDesign;
 };
 
-export type ShopRecord = Shop & { id: string };
+// Contact + social fields, editable on the shop details page independently
+// of name/city/design. Always present on a fetched ShopRecord (the API
+// defaults them to "" for shops created before this page existed).
+export type ShopRecord = Shop & {
+  id: string;
+  address: string;
+  email: string;
+  phone: string;
+  instagram_handle: string;
+  facebook_page_url: string;
+  google_maps_url: string;
+};
+
+export type ShopDetails = {
+  name: string;
+  address: string;
+  email: string;
+  phone: string;
+  instagram_handle: string;
+  facebook_page_url: string;
+  google_maps_url: string;
+};
 
 export async function createShop(shop: Shop): Promise<ShopRecord> {
   const res = await fetch(`${API_URL}/shops`, {
@@ -47,6 +68,22 @@ export async function createShop(shop: Shop): Promise<ShopRecord> {
 export async function getShop(shopId: string): Promise<ShopRecord> {
   const res = await fetch(`${API_URL}/shops/${shopId}`);
   if (!res.ok) throw new Error(`Shop not found (${res.status})`);
+  return res.json();
+}
+
+export async function updateShopDetails(
+  shopId: string,
+  details: ShopDetails,
+): Promise<ShopRecord> {
+  const res = await fetch(`${API_URL}/shops/${shopId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(details),
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`Save failed (${res.status}): ${detail}`);
+  }
   return res.json();
 }
 
