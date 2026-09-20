@@ -108,6 +108,30 @@ def test_shops_list_in_insertion_order(shops):
     assert [s.id for s in shops.list()] == [a.id, b.id]
 
 
+def test_save_persists_shop_details_and_leaves_design(shops):
+    saved = shops.add(_shop())
+    updated = saved.model_copy(
+        update={
+            "name": "Chunky Cookie Bar II",
+            "address": "Ermou 12, Athens",
+            "email": "owner@example.com",
+            "phone": "+30 694 1234567",
+            "instagram_handle": "chunky_cookie_bar",
+            "facebook_page_url": "https://facebook.com/chunkycookiebar",
+            "google_maps_url": "https://goo.gl/maps/abc123",
+        }
+    )
+    shops.save(updated)
+
+    got = shops.get(saved.id)
+    assert got is not None
+    assert got.name == "Chunky Cookie Bar II"
+    assert got.address == "Ermou 12, Athens"
+    assert got.email == "owner@example.com"
+    assert got.instagram_handle == "chunky_cookie_bar"
+    assert got.design == saved.design  # save() doesn't touch pass_designs
+
+
 def test_unknown_shop_is_none(shops):
     assert shops.get("shop_doesnotexist") is None
 

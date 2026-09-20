@@ -15,13 +15,16 @@ from .models import CampaignState, Member, MemberRecord, Shop, ShopRecord
 
 
 class ShopRepository(Protocol):
-    """Persistence for shops. The adapter assigns the id on `add`."""
+    """Persistence for shops. The adapter assigns the id on `add`; `save`
+    persists mutations (e.g. the shop details page)."""
 
     def add(self, shop: Shop) -> ShopRecord: ...
 
     def list(self) -> list[ShopRecord]: ...
 
     def get(self, shop_id: str) -> ShopRecord | None: ...
+
+    def save(self, shop: ShopRecord) -> ShopRecord: ...
 
 
 class MemberRepository(Protocol):

@@ -15,7 +15,7 @@ from ...deps import (
     get_shop_service,
 )
 from ...domain.errors import CampaignNotFound, MemberNotFound, ShopNotFound
-from ...domain.models import EMAIL, CampaignState, MemberRecord, Shop, ShopRecord
+from ...domain.models import EMAIL, CampaignState, MemberRecord, Shop, ShopDetails, ShopRecord
 from ...services.campaign_service import CampaignService
 from ...services.crew_service import CrewService
 from ...services.member_service import MemberService
@@ -77,6 +77,20 @@ def get_shop(
 ) -> ShopRecord:
     try:
         return shops.get_shop(shop_id)
+    except ShopNotFound as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.patch("/shops/{shop_id}", response_model=ShopRecord)
+def update_shop_details(
+    shop_id: str,
+    details: ShopDetails,
+    shops: ShopService = Depends(get_shop_service),
+) -> ShopRecord:
+    """Save the shop details page: contact info and social links, editable
+    separately from the pass design."""
+    try:
+        return shops.update_details(shop_id, details)
     except ShopNotFound as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

@@ -23,7 +23,11 @@ except ModuleNotFoundError:
     sys.exit("psycopg is not installed. Run: pip install 'psycopg[binary]'")
 
 EXPECTED: dict[str, set[str]] = {
-    "shops": {"id", "seq", "name", "city", "created_at"},
+    "shops": {
+        "id", "seq", "name", "city", "address", "email", "phone",
+        "instagram_handle", "facebook_page_url", "google_maps_url",
+        "created_at",
+    },
     "pass_designs": {
         "id", "shop_id", "pass_type", "logo_text", "offer_label", "offer_value",
         "secondary_label", "secondary_value", "background_color",
