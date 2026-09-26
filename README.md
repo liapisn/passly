@@ -1,7 +1,9 @@
 # Passly
 
 Wallet passes + AI marketing for Greek SMBs. The **Ch.4 application** of the
-MBA διπλωματική (Liapis 2026) — a working demo where a shop owner creates a
+MBA διπλωματική (Liapis 2026), submitted for the
+[MBA in Digital Innovation and Startup Entrepreneurship](https://msc.icsd.aegean.gr/en/masters/mba-digital-innovation-and-startup-entrepreneurship)
+at the University of the Aegean — a working demo where a shop owner creates a
 wallet pass ("πάσο") for their shop, with the AI marketing crew drafting the
 copy/campaign and the founder approving from the web.
 
